@@ -1,0 +1,39 @@
+{
+  "name": "auto-update-system",
+  "version": "1.0.0",
+  "description": "Production-grade auto-update system for static HTML/CSS/JS websites",
+  "main": "auto-update.js",
+  "scripts": {
+    "test": "node test/run-tests.js",
+    "test:integration": "node test/integration-test.js",
+    "build": "node build-version.js patch",
+    "build:minor": "node build-version.js minor",
+    "build:major": "node build-version.js major",
+    "serve": "npx http-server -p 8080 -c-1",
+    "dev": "npx http-server -p 8080 -c-1 --open test/index.html"
+  },
+  "keywords": [
+    "auto-update",
+    "hot-reload",
+    "cache-busting",
+    "version-control",
+    "static-site",
+    "pwa",
+    "service-worker",
+    "update-notification"
+  ],
+  "author": "Mohammad Faiz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites/issues"
+  },
+  "homepage": "https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites#readme",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  }
+}

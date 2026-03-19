@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto-Update System - Test Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 48px;
+      margin-bottom: 16px;
+      font-weight: 700;
+    }
+    
+    .header p {
+      font-size: 20px;
+      opacity: 0.9;
+    }
+    
+    .version-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 16px;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card h2 {
+      font-size: 24px;
+      margin-bottom: 16px;
+      color: #111827;
+    }
+    
+    .card p {
+      color: #6b7280;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+    }
+    
+    .status-item {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+    }
+    
+    .status-item.active {
+      border-color: #10b981;
+      background: #ecfdf5;
+    }
+    
+    .status-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    
+    .status-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+    
+    .status-item.active .status-value {
+      color: #10b981;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+      margin-right: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: #6b7280;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+    }
+    
+    .btn-success {
+      background: #10b981;
+    }
+    
+    .log-container {
+      background: #1f2937;
+      color: #f9fafb;
+      padding: 20px;
+      border-radius: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 16px;
+    }
+    
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #374151;
+    }
+    
+    .log-time {
+      color: #9ca3af;
+      margin-right: 12px;
+    }
+    
+    .log-level {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    
+    .log-level.info {
+      background: #3b82f6;
+    }
+    
+    .log-level.success {
+      background: #10b981;
+    }
+    
+    .log-level.error {
+      background: #ef4444;
+    }
+    
+    .log-level.warning {
+      background: #f59e0b;
+    }
+    
+    .test-section {
+      margin-top: 32px;
+    }
+    
+    .test-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    
+    .test-card {
+      background: #f9fafb;
+      padding: 20px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+    }
+    
+    .test-card h3 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #111827;
+    }
+    
+    .test-card p {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 16px;
+    }
+    
+    .test-result {
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    .test-result.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .test-result.passed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .test-result.failed {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 32px;
+      }
+      
+      .status-grid,
+      .test-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Auto-Update System</h1>
+      <p>Production-Grade Auto-Update for Static Websites</p>
+      <div class="version-badge" id="current-version">Version: Loading...</div>
+    </div>
+    
+    <div class="card">
+      <h2>📊 System Status</h2>
+      <p>Real-time monitoring of the auto-update system</p>
+      
+      <div class="status-grid">
+        <div class="status-item active">
+          <div class="status-label">System Status</div>
+          <div class="status-value" id="system-status">Active</div>
+        </div>
+        
+        <div class="status-item">
+          <div class="status-label">Current Version</div>
+          <div class="status-value" id="status-version">1.0.0</div>
+        </div>
+        
+        <div class="status-item">
+          <div class="status-label">Last Check</div>
+          <div class="status-value" id="last-check">Never</div>
+        </div>
+        
+        <div class="status-item">
+          <div class="status-label">Update Available</div>
+          <div class="status-value" id="update-available">No</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>🎮 Control Panel</h2>
+      <p>Test and control the auto-update system</p>
+      
+      <div style="margin-top: 24px;">
+        <button class="btn" onclick="manualCheck()">🔄 Check for Updates</button>
+        <button class="btn btn-success" onclick="simulateUpdate()">📦 Simulate Update</button>
+        <button class="btn btn-secondary" onclick="toggleSystem()">⏸️ Toggle System</button>
+        <button class="btn btn-danger" onclick="clearStorage()">🗑️ Clear Storage</button>
+        <button class="btn" onclick="showInfo()">ℹ️ Show Info</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>🧪 Automated Tests</h2>
+      <p>Comprehensive test suite to verify functionality</p>
+      
+      <div style="margin-top: 24px;">
+        <button class="btn btn-success" onclick="runAllTests()">▶️ Run All Tests</button>
+        <button class="btn btn-secondary" onclick="clearTestResults()">🧹 Clear Results</button>
+      </div>
+      
+      <div class="test-section">
+        <div class="test-grid" id="test-results">
+          <!-- Test results will be inserted here -->
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <h2>📝 Activity Log</h2>
+      <p>Real-time log of all system activities</p>
+      
+      <div style="margin-top: 16px;">
+        <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
+      </div>
+      
+      <div class="log-container" id="log-container">
+        <div class="log-entry">
+          <span class="log-time">--:--:--</span>
+          <span class="log-level info">INFO</span>
+          <span>System initialized</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Load Auto-Update System -->
+  <script src="../auto-update.js"></script>
+  
+  <script>
+    // Test configuration
+    const TEST_CONFIG = {
+      manifestUrl: '../version-manifest.json',
+      checkInterval: 10000, // 10 seconds for testing
+      forceUpdate: false,   // Don't auto-reload during tests
+      showNotification: true,
+      debug: true,
+      onUpdateAvailable: (newVersion, oldVersion) => {
+        addLog('success', `Update detected: ${oldVersion} → ${newVersion}`);
+        updateStatus('update-available', 'Yes');
+      },
+      onUpdateComplete: (version) => {
+        addLog('success', `Update completed: ${version}`);
+      },
+      onError: (error) => {
+        addLog('error', `Error: ${error.message}`);
+      }
+    };
+    
+    // Initialize system
+    let systemEnabled = true;
+    
+    function initSystem() {
+      addLog('info', 'Initializing Auto-Update System...');
+      
+      const result = AutoUpdate.init(TEST_CONFIG);
+      
+      if (result) {
+        addLog('success', 'System initialized successfully');
+        updateStatus('system-status', 'Active');
+        updateVersionDisplay();
+      } else {
+        addLog('error', 'Failed to initialize system');
+        updateStatus('system-status', 'Error');
+      }
+    }
+    
+    // Update version display
+    function updateVersionDisplay() {
+      const version = AutoUpdate.getVersion() || '1.0.0';
+      document.getElementById('current-version').textContent = `Version: ${version}`;
+      document.getElementById('status-version').textContent = version;
+    }
+    
+    // Add log entry
+    function addLog(level, message) {
+      const container = document.getElementById('log-container');
+      const time = new Date().toLocaleTimeString();
+      
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.innerHTML = `
+        <span class="log-time">${time}</span>
+        <span class="log-level ${level}">${level.toUpperCase()}</span>
+        <span>${message}</span>
+      `;
+      
+      container.insertBefore(entry, container.firstChild);
+      
+      // Keep only last 50 entries
+      while (container.children.length > 50) {
+        container.removeChild(container.lastChild);
+      }
+    }
+    
+    // Update status display
+    function updateStatus(id, value) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value;
+        
+        if (id === 'last-check') {
+          element.textContent = new Date().toLocaleTimeString();
+        }
+      }
+    }
+    
+    // Manual check
+    function manualCheck() {
+      addLog('info', 'Manual update check triggered');
+      updateStatus('last-check', new Date().toLocaleTimeString());
+      AutoUpdate.checkNow();
+    }
+    
+    // Simulate update
+    async function simulateUpdate() {
+      addLog('warning', 'Simulating update by modifying manifest...');
+      
+      try {
+        // In real scenario, you would update the manifest on server
+        // For testing, we'll just trigger a check
+        alert('To simulate an update:\n\n1. Edit version-manifest.json\n2. Change version to 1.0.1\n3. Click "Check for Updates"');
+        
+      } catch (error) {
+        addLog('error', `Simulation failed: ${error.message}`);
+      }
+    }
+    
+    // Toggle system
+    function toggleSystem() {
+      if (systemEnabled) {
+        AutoUpdate.disable();
+        systemEnabled = false;
+        updateStatus('system-status', 'Disabled');
+        addLog('warning', 'System disabled');
+      } else {
+        AutoUpdate.enable();
+        systemEnabled = true;
+        updateStatus('system-status', 'Active');
+        addLog('success', 'System enabled');
+      }
+    }
+    
+    // Clear storage
+    function clearStorage() {
+      if (confirm('Clear all stored data? This will reset the system.')) {
+        localStorage.clear();
+        addLog('warning', 'Storage cleared');
+        location.reload();
+      }
+    }
+    
+    // Show info
+    function showInfo() {
+      const version = AutoUpdate.getVersion();
+      const enabled = AutoUpdate.isEnabled();
+      
+      alert(`Auto-Update System Info:\n\nLibrary Version: ${AutoUpdate.version}\nCurrent Version: ${version}\nEnabled: ${enabled}\nCheck Interval: ${TEST_CONFIG.checkInterval}ms`);
+    }
+    
+    // Clear log
+    function clearLog() {
+      document.getElementById('log-container').innerHTML = '';
+      addLog('info', 'Log cleared');
+    }
+    
+    // Test functions
+    const tests = [
+      {
+        name: 'Initialization Test',
+        description: 'Verify system initializes correctly',
+        run: async () => {
+          return AutoUpdate.version !== undefined;
+        }
+      },
+      {
+        name: 'Version Storage Test',
+        description: 'Verify version is stored in localStorage',
+        run: async () => {
+          const version = AutoUpdate.getVersion();
+          return version !== null && version !== undefined;
+        }
+      },
+      {
+        name: 'Manifest Fetch Test',
+        description: 'Verify manifest can be fetched from server',
+        run: async () => {
+          try {
+            const response = await fetch('../version-manifest.json?t=' + Date.now());
+            const data = await response.json();
+            return data.version !== undefined;
+          } catch (error) {
+            return false;
+          }
+        }
+      },
+      {
+        name: 'Enable/Disable Test',
+        description: 'Verify system can be enabled/disabled',
+        run: async () => {
+          AutoUpdate.disable();
+          const disabled = !AutoUpdate.isEnabled();
+          AutoUpdate.enable();
+          const enabled = AutoUpdate.isEnabled();
+          return disabled && enabled;
+        }
+      },
+      {
+        name: 'Cache API Test',
+        description: 'Verify Cache API is available',
+        run: async () => {
+          return 'caches' in window;
+        }
+      },
+      {
+        name: 'LocalStorage Test',
+        description: 'Verify localStorage is available',
+        run: async () => {
+          try {
+            localStorage.setItem('test', 'test');
+            localStorage.removeItem('test');
+            return true;
+          } catch (error) {
+            return false;
+          }
+        }
+      }
+    ];
+    
+    // Run all tests
+    async function runAllTests() {
+      addLog('info', 'Running automated tests...');
+      
+      const container = document.getElementById('test-results');
+      container.innerHTML = '';
+      
+      for (const test of tests) {
+        const card = document.createElement('div');
+        card.className = 'test-card';
+        card.innerHTML = `
+          <h3>${test.name}</h3>
+          <p>${test.description}</p>
+          <div class="test-result pending">⏳ Running...</div>
+        `;
+        container.appendChild(card);
+        
+        try {
+          const result = await test.run();
+          const resultDiv = card.querySelector('.test-result');
+          
+          if (result) {
+            resultDiv.className = 'test-result passed';
+            resultDiv.textContent = '✅ Passed';
+            addLog('success', `Test passed: ${test.name}`);
+          } else {
+            resultDiv.className = 'test-result failed';
+            resultDiv.textContent = '❌ Failed';
+            addLog('error', `Test failed: ${test.name}`);
+          }
+        } catch (error) {
+          const resultDiv = card.querySelector('.test-result');
+          resultDiv.className = 'test-result failed';
+          resultDiv.textContent = `❌ Error: ${error.message}`;
+          addLog('error', `Test error: ${test.name} - ${error.message}`);
+        }
+        
+        // Small delay between tests
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      addLog('success', 'All tests completed');
+    }
+    
+    // Clear test results
+    function clearTestResults() {
+      document.getElementById('test-results').innerHTML = '';
+      addLog('info', 'Test results cleared');
+    }
+    
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      initSystem();
+      
+      // Update last check time periodically
+      setInterval(() => {
+        const lastCheck = localStorage.getItem('auto_update_last_check');
+        if (lastCheck) {
+          const time = new Date(parseInt(lastCheck));
+          updateStatus('last-check', time.toLocaleTimeString());
+        }
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Integration Example</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border-left: 4px solid #2196f3;
+    }
+    
+    .version {
+      display: inline-block;
+      background: #4caf50;
+      color: white;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    button {
+      background: #2196f3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 5px;
+    }
+    
+    button:hover {
+      background: #1976d2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Basic Integration Example</h1>
+    
+    <div class="info">
+      <strong>Current Version:</strong> <span class="version" id="version">1.0.0</span>
+    </div>
+    
+    <p>
+      This is a simple example showing how to integrate the Auto-Update System
+      into your static website. The system will automatically check for updates
+      every 30 seconds and notify users when a new version is available.
+    </p>
+    
+    <h2>Features Demonstrated:</h2>
+    <ul>
+      <li>Automatic update detection</li>
+      <li>User-friendly notifications</li>
+      <li>Manual update checks</li>
+      <li>Version display</li>
+    </ul>
+    
+    <div style="margin-top: 30px;">
+      <button onclick="checkForUpdates()">Check for Updates</button>
+      <button onclick="showVersion()">Show Version Info</button>
+    </div>
+    
+    <div class="info" style="margin-top: 30px;">
+      <strong>How to test:</strong><br>
+      1. Open <code>version-manifest.json</code><br>
+      2. Change the version number (e.g., from 1.0.0 to 1.0.1)<br>
+      3. Click "Check for Updates" or wait 30 seconds<br>
+      4. You'll see an update notification appear
+    </div>
+  </div>
+  
+  <!-- Include Auto-Update System -->
+  <script src="../auto-update.js"></script>
+  
+  <script>
+    // Initialize Auto-Update System
+    AutoUpdate.init({
+      manifestUrl: '../version-manifest.json',
+      checkInterval: 30000,  // Check every 30 seconds
+      forceUpdate: false,    // Don't force reload (let user decide)
+      showNotification: true,
+      debug: true,           // Enable console logging
+      
+      // Callbacks
+      onUpdateAvailable: (newVersion, oldVersion) => {
+        console.log('Update available:', oldVersion, '→', newVersion);
+        document.getElementById('version').textContent = newVersion;
+      },
+      
+      onUpdateComplete: (version) => {
+        console.log('Update completed:', version);
+      },
+      
+      onError: (error) => {
+        console.error('Update check failed:', error);
+      }
+    });
+    
+    // Display current version
+    function updateVersionDisplay() {
+      const version = AutoUpdate.getVersion() || '1.0.0';
+      document.getElementById('version').textContent = version;
+    }
+    
+    // Manual update check
+    function checkForUpdates() {
+      console.log('Manual update check triggered');
+      AutoUpdate.checkNow();
+    }
+    
+    // Show version info
+    function showVersion() {
+      const version = AutoUpdate.getVersion();
+      const enabled = AutoUpdate.isEnabled();
+      
+      alert(
+        'Auto-Update System Info:\n\n' +
+        'Library Version: ' + AutoUpdate.version + '\n' +
+        'Current Version: ' + version + '\n' +
+        'Status: ' + (enabled ? 'Enabled' : 'Disabled')
+      );
+    }
+    
+    // Update version display on load
+    window.addEventListener('DOMContentLoaded', updateVersionDisplay);
+  </script>
+</body>
+</html>
