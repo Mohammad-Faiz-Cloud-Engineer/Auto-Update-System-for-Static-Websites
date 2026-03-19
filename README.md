@@ -439,12 +439,6 @@ Built by [Mohammad Faiz](https://github.com/Mohammad-Faiz-Cloud-Engineer)
 
 If this saved you time, consider giving it a star on GitHub!
 
-## Support
-
-- 🐛 [Report Issues](https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites/issues)
-- 💬 [Discussions](https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites/discussions)
-- 📧 Email: mohammadfaiz.cloudeng@gmail.com
-
 ---
 
 **Made for developers who are tired of cache issues.**
