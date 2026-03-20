@@ -2,266 +2,113 @@
 
 ## Reporting Security Issues
 
-Found a security vulnerability? Don't open a public issue. Email the maintainer directly with:
+Found a security problem? Email me directly instead of opening a public issue.
 
-- Description of the vulnerability
-- Steps to reproduce
-- Potential impact
-- Suggested fix (if you have one)
+**Email:** [Your email here]
 
-You'll get a response within 48 hours.
+I'll respond within 48 hours and work with you to fix it.
 
-## What's Built In
+## What We Do
 
-**XSS Protection**  
-All user input is sanitized before going into the DOM. Version strings from the manifest are validated and cleaned. No `eval()` or `Function()` constructor anywhere in the code.
+### XSS Protection
+All user-facing text is sanitized using `textContent` instead of `innerHTML`. Version strings from the server are cleaned before display.
 
-**Input Validation**  
-The manifest is thoroughly validated - structure, version format, file size (must be under 1MB), content type. Requests timeout after 10 seconds so a slow server won't hang the library.
+### No Dangerous Code
+- No `eval()`
+- No `Function()` constructor
+- No inline scripts
 
-**Network Security**  
-Use HTTPS in production (required for Service Workers anyway). Manifest fetches use cache-busting with random tokens and abort controllers for timeouts. No hardcoded HTTP URLs.
+### Input Validation
+- Manifest files limited to 1MB
+- 10 second timeout on network requests
+- Content-type verification
+- Version string validation
 
-**CSP Compatible**  
-Works with Content Security Policy. Recommended policy:
+### Secure Hashing
+Files are hashed with SHA-256, not MD5.
 
+### HTTPS Required
+Service Workers only work over HTTPS (except localhost). This is a browser requirement, not ours.
+
+## What You Should Do
+
+### Server Configuration
+
+Set proper cache headers for the manifest:
+
+```nginx
+# Nginx
+location /version-manifest.json {
+  add_header Cache-Control "no-store, no-cache, must-revalidate";
+  add_header Pragma "no-cache";
+}
 ```
-Content-Security-Policy: 
-  default-src 'self'; 
-  script-src 'self' 'unsafe-inline'; 
-  style-src 'self' 'unsafe-inline'; 
-  connect-src 'self';
+
+### Content Security Policy
+
+If you use CSP, allow the script:
+
+```html
+<meta http-equiv="Content-Security-Policy" 
+      content="script-src 'self'">
 ```
 
-The `'unsafe-inline'` is needed for notification styles. If you need stricter CSP, extract the styles to a separate CSS file.
+The library is CSP-compatible (no inline scripts).
 
-**File Integrity**  
-The build script generates SHA-256 hashes of your files. You can verify them:
+### Don't Cache Sensitive Data
+
+The Service Worker caches files for offline use. Don't cache:
+- User data
+- Authentication tokens
+- Personal information
+
+### Clear Cache on Logout
 
 ```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  onUpdateAvailable: async (newVersion, oldVersion) => {
-    const response = await fetch('/version-manifest.json');
-    const manifest = await response.json();
-    
-    if (manifest.files && manifest.files['auto-update.js']) {
-      console.log('File hash:', manifest.files['auto-update.js']);
-      // Compare with expected hash
-    }
-  }
-});
+// On logout
+AutoUpdate.destroy();
+localStorage.clear();
+sessionStorage.clear();
 ```
+
+## Known Limitations
+
+### Client-Side Only
+This library runs in the browser. It can't prevent:
+- Man-in-the-middle attacks (use HTTPS)
+- Server compromises (secure your server)
+- Malicious CDNs (host files yourself)
+
+### Progressive Rollout
+The rollout percentage is client-side. A determined user could bypass it. Don't use it for security - it's for gradual deployments.
+
+### Service Worker Scope
+Service Workers can intercept all requests in their scope. Make sure your Service Worker file isn't compromised.
+
+## Security Features by Version
+
+### v2.0.0
+- XSS protection
+- Input validation
+- SHA-256 hashing
+- CSP compatibility
+- Race condition fixes
+- Memory leak fixes
+
+### v2.2.0
+- Service Worker security
+- Cache size limits
+- Cache age limits
+- Offline security considerations
 
 ## Best Practices
 
-**Use HTTPS**  
-Always. Not optional. Service Workers require it anyway.
+1. **Use HTTPS** - Required for Service Workers
+2. **Validate Server-Side** - Don't trust client data
+3. **Set Cache Headers** - Control what gets cached
+4. **Monitor Updates** - Track update success rates
+5. **Test Offline** - Make sure offline mode is secure
 
-```javascript
-// Good
-manifestUrl: 'https://example.com/version-manifest.json'
+## Questions?
 
-// Bad
-manifestUrl: 'http://example.com/version-manifest.json'
-```
-
-**Validate on the server**  
-Don't just serve a static JSON file. Generate it dynamically and sanitize the values:
-
-```javascript
-app.get('/version-manifest.json', (req, res) => {
-  const manifest = {
-    version: sanitize(process.env.APP_VERSION),
-    buildNumber: sanitize(process.env.BUILD_NUMBER),
-    timestamp: new Date().toISOString()
-  };
-  res.json(manifest);
-});
-```
-
-**Use Subresource Integrity for CDN**  
-If you're serving the library from a CDN:
-
-```html
-<script 
-  src="https://cdn.example.com/auto-update.js" 
-  integrity="sha384-..." 
-  crossorigin="anonymous">
-</script>
-```
-
-**Rate limit manifest requests**  
-Prevent abuse:
-
-```nginx
-limit_req_zone $binary_remote_addr zone=manifest:10m rate=10r/m;
-
-location = /version-manifest.json {
-    limit_req zone=manifest burst=5;
-}
-```
-
-**Monitor for anomalies**  
-Track errors and unusual patterns:
-
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  onError: (error) => {
-    analytics.track('update_error', {
-      error: error.message,
-      timestamp: Date.now()
-    });
-  }
-});
-```
-
-## Known Risks
-
-**Manifest tampering**  
-If someone can modify `version-manifest.json` on your server, they can trigger unwanted updates. Secure your server. Use file integrity monitoring. Consider manifest signing (see below).
-
-**Man-in-the-middle attacks**  
-Without HTTPS, the manifest can be intercepted and modified. Use HTTPS. Enable HSTS headers. For mobile apps, consider certificate pinning.
-
-**Denial of service**  
-Rapid version changes could cause excessive reloads. Implement rate limiting on the server. Monitor update frequency.
-
-## Advanced: Manifest Signing
-
-For high-security applications, you can sign the manifest to prevent tampering.
-
-Generate a key pair:
-
-```bash
-openssl genrsa -out private.pem 2048
-openssl rsa -in private.pem -pubout -out public.pem
-```
-
-Server-side (Node.js):
-
-```javascript
-const crypto = require('crypto');
-const fs = require('fs');
-
-function signManifest(manifest) {
-  const privateKey = fs.readFileSync('private.pem', 'utf8');
-  const sign = crypto.createSign('SHA256');
-  
-  const data = JSON.stringify({
-    version: manifest.version,
-    buildNumber: manifest.buildNumber,
-    timestamp: manifest.timestamp
-  });
-  
-  sign.update(data);
-  sign.end();
-  
-  return {
-    ...manifest,
-    signature: sign.sign(privateKey, 'base64')
-  };
-}
-
-app.get('/version-manifest.json', (req, res) => {
-  const manifest = {
-    version: '1.0.0',
-    buildNumber: '20260319001',
-    timestamp: new Date().toISOString()
-  };
-  
-  res.json(signManifest(manifest));
-});
-```
-
-Client-side:
-
-```javascript
-const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA...
------END PUBLIC KEY-----`;
-
-async function verifyManifest(manifest) {
-  if (!manifest.signature) {
-    throw new Error('Manifest not signed');
-  }
-  
-  const encoder = new TextEncoder();
-  const data = JSON.stringify({
-    version: manifest.version,
-    buildNumber: manifest.buildNumber,
-    timestamp: manifest.timestamp
-  });
-  
-  const signature = Uint8Array.from(atob(manifest.signature), c => c.charCodeAt(0));
-  
-  const publicKey = await crypto.subtle.importKey(
-    'spki',
-    pemToArrayBuffer(PUBLIC_KEY),
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['verify']
-  );
-  
-  const isValid = await crypto.subtle.verify(
-    'RSASSA-PKCS1-v1_5',
-    publicKey,
-    signature,
-    encoder.encode(data)
-  );
-  
-  if (!isValid) {
-    throw new Error('Invalid manifest signature');
-  }
-  
-  return true;
-}
-
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  onUpdateAvailable: async (newVersion, oldVersion) => {
-    const response = await fetch('/version-manifest.json');
-    const manifest = await response.json();
-    
-    try {
-      await verifyManifest(manifest);
-      console.log('Manifest signature valid');
-    } catch (error) {
-      console.error('Manifest signature invalid:', error);
-      return; // abort update
-    }
-  }
-});
-```
-
-## Pre-Deployment Checklist
-
-Before going to production:
-
-- HTTPS enabled
-- CSP headers configured
-- Security headers added (X-Frame-Options, X-Content-Type-Options, etc.)
-- Rate limiting implemented
-- Manifest validation on server
-- Error monitoring configured
-- Tested in multiple browsers
-- Callbacks reviewed for sensitive data exposure
-- File integrity monitoring enabled
-- Backup and rollback plan ready
-
-## Privacy
-
-This library doesn't collect or store personal data. Everything is stored locally in the user's browser. No analytics, no tracking, no phone-home.
-
-GDPR compliant by default. CCPA compliant by default.
-
-Not HIPAA compliant out of the box - if you're building healthcare apps, talk to a compliance expert.
-
-## Updates
-
-This security policy is reviewed quarterly. Last updated: March 2026.
-
-## License
-
-MIT License - same as the rest of the project.
+Open an issue or email me directly for security concerns.

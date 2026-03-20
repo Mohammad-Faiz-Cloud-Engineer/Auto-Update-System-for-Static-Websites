@@ -467,8 +467,12 @@ test('BUILD_PLUGINS.md exists', () => {
   return fs.existsSync(path.join(__dirname, '../docs/guides/BUILD_PLUGINS.md'));
 });
 
-test('V2.1_RELEASE_NOTES.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../docs/V2.1_RELEASE_NOTES.md'));
+test('CHANGELOG.md has v2.1 release notes', () => {
+  const changelog = fs.readFileSync(
+    path.join(__dirname, '../CHANGELOG.md'),
+    'utf8'
+  );
+  return changelog.includes('2.1.0') && changelog.includes('TypeScript');
 });
 
 test('Framework integration guide has React section', () => {
@@ -508,7 +512,7 @@ test('Build plugins guide has Vite section', () => {
     path.join(__dirname, '../docs/guides/BUILD_PLUGINS.md'),
     'utf8'
   );
-  return guide.includes('Vite') && guide.includes('autoUpdatePlugin');
+  return guide.includes('Vite') && guide.includes('autoUpdate');
 });
 
 // ============================================================================

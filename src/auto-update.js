@@ -4,7 +4,7 @@
  * Automatically detects and applies updates to static websites by checking
  * version manifests and clearing browser caches when new versions are available.
  * 
- * @version 2.1.0
+ * @version 2.2.0
  * @license MIT
  * @author Mohammad Faiz
  * @repository https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites
@@ -14,7 +14,7 @@
   'use strict';
 
   // Version
-  const LIBRARY_VERSION = '2.1.0';
+  const LIBRARY_VERSION = '2.2.0';
   
   // Storage keys
   const STORAGE_KEY_VERSION = 'auto_update_current_version';
@@ -33,9 +33,17 @@
     retryAttempts: 3,             // Retry failed checks
     retryDelay: 5000,             // Delay between retries (ms)
     rolloutPercentage: 1.0,       // 1.0 = 100% of users (progressive rollout)
+    // v2.2 features
+    serviceWorker: true,          // Enable Service Worker integration
+    serviceWorkerUrl: '/auto-update-sw.js', // Service Worker script URL
+    offlineFirst: true,           // Enable offline-first mode
+    backgroundSync: true,         // Enable background sync
+    deltaUpdates: true,           // Enable delta updates (only download changed files)
+    precacheUrls: [],             // URLs to precache on install
     onUpdateAvailable: null,      // Callback
     onUpdateComplete: null,       // Callback
-    onError: null                 // Callback
+    onError: null,                // Callback
+    onServiceWorkerUpdate: null   // Callback when SW updates
   };
   
   // State
@@ -47,6 +55,8 @@
   let checkPromise = null;
   let eventListeners = [];
   let isDestroyed = false;
+  let serviceWorkerRegistration = null;
+  let deltaManifest = null;
   
   /**
    * Log debug messages
@@ -268,6 +278,16 @@
     };
     
     try {
+      // If Service Worker is active, ask it to clear caches
+      if (serviceWorkerRegistration && serviceWorkerRegistration.active) {
+        try {
+          serviceWorkerRegistration.active.postMessage({ type: 'CLEAR_CACHE' });
+          log('Requested Service Worker to clear caches');
+        } catch (error) {
+          logError('Failed to message Service Worker:', error);
+        }
+      }
+      
       // Clear Cache API (Service Worker caches)
       if ('caches' in window) {
         try {
@@ -285,8 +305,8 @@
         }
       }
       
-      // Clear Service Worker registration (forces SW update)
-      if ('serviceWorker' in navigator) {
+      // Unregister Service Worker if not using offline-first mode
+      if (!config.offlineFirst && 'serviceWorker' in navigator) {
         try {
           const registrations = await navigator.serviceWorker.getRegistrations();
           await Promise.all(
@@ -807,6 +827,17 @@
           return;
         }
         
+        // Try delta updates first if enabled
+        if (config.deltaUpdates && manifest.files) {
+          log('Attempting delta update...');
+          const deltaSuccess = await downloadDeltaUpdates(manifest);
+          
+          if (deltaSuccess) {
+            log('Delta update initiated');
+            // Don't return - still show notification or apply update
+          }
+        }
+        
         // Call callback
         if (typeof config.onUpdateAvailable === 'function') {
           config.onUpdateAvailable(serverVersion, storedVersion);
@@ -889,6 +920,180 @@
   }
   
   /**
+   * Register Service Worker for offline-first and background sync
+   */
+  async function registerServiceWorker() {
+    if (!config.serviceWorker) {
+      log('Service Worker disabled in config');
+      return null;
+    }
+    
+    if (!('serviceWorker' in navigator)) {
+      log('Service Worker not supported in this browser');
+      return null;
+    }
+    
+    try {
+      log('Registering Service Worker:', config.serviceWorkerUrl);
+      
+      const registration = await navigator.serviceWorker.register(config.serviceWorkerUrl, {
+        scope: '/'
+      });
+      
+      log('Service Worker registered successfully');
+      
+      // Listen for updates
+      registration.addEventListener('updatefound', () => {
+        log('Service Worker update found');
+        
+        const newWorker = registration.installing;
+        
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            log('New Service Worker installed');
+            
+            // Notify about SW update
+            if (typeof config.onServiceWorkerUpdate === 'function') {
+              config.onServiceWorkerUpdate(newWorker);
+            }
+            
+            // Skip waiting and activate new SW
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+      
+      // Listen for messages from Service Worker
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage);
+      
+      // Precache URLs if specified
+      if (config.precacheUrls && config.precacheUrls.length > 0) {
+        registration.active?.postMessage({
+          type: 'PRECACHE_URLS',
+          data: { urls: config.precacheUrls }
+        });
+      }
+      
+      serviceWorkerRegistration = registration;
+      return registration;
+      
+    } catch (error) {
+      logError('Service Worker registration failed:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * Handle messages from Service Worker
+   */
+  function handleServiceWorkerMessage(event) {
+    const { type, version, manifest, changedFiles } = event.data;
+    
+    log('Message from Service Worker:', type);
+    
+    switch (type) {
+      case 'UPDATE_AVAILABLE':
+        log('Service Worker detected update:', version);
+        currentVersion = version;
+        
+        if (typeof config.onUpdateAvailable === 'function') {
+          config.onUpdateAvailable(version, getStoredVersion());
+        }
+        
+        if (!config.forceUpdate) {
+          showUpdateNotification(version, getStoredVersion());
+        }
+        break;
+        
+      case 'DELTA_UPDATE_COMPLETE':
+        log('Delta update complete. Changed files:', changedFiles);
+        
+        if (config.forceUpdate) {
+          applyUpdate();
+        }
+        break;
+        
+      case 'APPLY_UPDATE':
+        log('Service Worker requested update application');
+        applyUpdate();
+        break;
+    }
+  }
+  
+  /**
+   * Request background sync for update check
+   */
+  async function requestBackgroundSync() {
+    if (!config.backgroundSync) {
+      return false;
+    }
+    
+    if (!serviceWorkerRegistration) {
+      log('No Service Worker registration for background sync');
+      return false;
+    }
+    
+    if (!('sync' in serviceWorkerRegistration)) {
+      log('Background Sync not supported');
+      return false;
+    }
+    
+    try {
+      await serviceWorkerRegistration.sync.register('check-updates');
+      log('Background sync registered');
+      return true;
+    } catch (error) {
+      logError('Background sync registration failed:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Download delta updates (only changed files)
+   */
+  async function downloadDeltaUpdates(manifest) {
+    if (!config.deltaUpdates) {
+      log('Delta updates disabled');
+      return false;
+    }
+    
+    if (!serviceWorkerRegistration) {
+      log('No Service Worker for delta updates');
+      return false;
+    }
+    
+    try {
+      log('Requesting delta update download');
+      
+      // Store new manifest for comparison
+      deltaManifest = manifest;
+      
+      // Request Service Worker to download delta
+      if ('sync' in serviceWorkerRegistration) {
+        await serviceWorkerRegistration.sync.register('download-delta');
+        log('Delta download sync registered');
+      } else {
+        // Fallback: send message directly
+        serviceWorkerRegistration.active?.postMessage({
+          type: 'DOWNLOAD_DELTA'
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      logError('Delta update failed:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * Check if app is running in offline mode
+   */
+  function isOffline() {
+    return !navigator.onLine;
+  }
+  
+  /**
    * Start periodic update checks with proper cleanup
    */
   function startUpdateChecks() {
@@ -942,7 +1147,7 @@
   /**
    * Initialize auto-update system
    */
-  function init(userConfig = {}) {
+  async function init(userConfig = {}) {
     log('Initializing Auto-Update System v' + LIBRARY_VERSION);
     
     // Merge config
@@ -955,6 +1160,11 @@
     }
     
     log('Configuration:', config);
+    
+    // Register Service Worker if enabled
+    if (config.serviceWorker) {
+      await registerServiceWorker();
+    }
     
     // Start checks
     startUpdateChecks();
@@ -974,11 +1184,18 @@
     dismissNotification();
     hideLoadingIndicator();
     
+    // Remove Service Worker message listener
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage);
+    }
+    
     // Clear state
     checkPromise = null;
     currentVersion = null;
     isChecking = false;
     retryCount = 0;
+    serviceWorkerRegistration = null;
+    deltaManifest = null;
     
     log('Auto-Update System destroyed');
   }
@@ -1014,6 +1231,27 @@
     stopUpdateChecks();
   }
   
+  /**
+   * Get Service Worker registration
+   */
+  function getServiceWorker() {
+    return serviceWorkerRegistration;
+  }
+  
+  /**
+   * Check if offline
+   */
+  function checkOfflineStatus() {
+    return isOffline();
+  }
+  
+  /**
+   * Manually trigger background sync
+   */
+  function syncNow() {
+    return requestBackgroundSync();
+  }
+  
   // Public API
   const AutoUpdate = {
     version: LIBRARY_VERSION,
@@ -1024,7 +1262,11 @@
     getVersion,
     enable,
     disable,
-    isEnabled
+    isEnabled,
+    // v2.2 methods
+    getServiceWorker,
+    isOffline: checkOfflineStatus,
+    syncNow
   };
   
   // Export to window

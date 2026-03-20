@@ -1,151 +1,58 @@
 # Build Tool Plugins
 
-Automatic version manifest generation for Webpack and Vite.
+Stop manually updating version numbers. These plugins do it automatically during your build.
 
-## Why Use Plugins?
+## Why Use Them?
 
-Instead of manually bumping versions and running build scripts, these plugins automatically generate the version manifest during your build process. They calculate file hashes, generate build numbers, and create the manifest - all automatically.
+Every time you build, the plugin:
+- Reads your package.json version
+- Calculates file hashes
+- Generates the version manifest
+- All automatically
+
+No more forgetting to bump versions or running separate scripts.
 
 ## Webpack Plugin
 
-### Installation
+### Setup
 
-Copy the plugin to your project:
+1. Copy the plugin to your project:
 
 ```bash
-cp plugins/webpack-plugin.js webpack-plugins/
+cp plugins/webpack/webpack-plugin.js webpack-plugins/
 ```
 
-### Configuration
-
-In `webpack.config.js`:
+2. Add it to `webpack.config.js`:
 
 ```javascript
 const AutoUpdateWebpackPlugin = require('./webpack-plugins/webpack-plugin');
 
 module.exports = {
-  // ... other config
   plugins: [
     new AutoUpdateWebpackPlugin({
-      version: '1.0.0',  // or process.env.npm_package_version
+      version: '1.0.0',
       files: ['**/*.js', '**/*.css'],
-      exclude: ['version-manifest.json', '**/*.map'],
-      description: 'Production build'
+      exclude: ['version-manifest.json', '**/*.map']
     })
   ]
 };
 ```
 
-### Options
-
-```javascript
-{
-  // Version string (required)
-  version: '1.0.0',
-  
-  // Files to include in manifest (glob patterns)
-  files: ['**/*.js', '**/*.css', '**/*.html'],
-  
-  // Files to exclude
-  exclude: ['version-manifest.json', '**/*.map'],
-  
-  // Output path for manifest
-  manifestPath: 'version-manifest.json',
-  
-  // Hash algorithm
-  hashAlgorithm: 'sha256',
-  
-  // Hash length
-  hashLength: 16,
-  
-  // Optional description
-  description: 'Production build',
-  
-  // Optional changelog
-  changelog: ['Fixed bug X', 'Added feature Y']
-}
-```
-
-### Example Output
-
-The plugin generates:
-
-```json
-{
-  "version": "1.0.0",
-  "buildNumber": "20260320120000",
-  "timestamp": "2026-03-20T12:00:00.000Z",
-  "description": "Production build",
-  "files": {
-    "main.js": "a1b2c3d4e5f6g7h8",
-    "main.css": "h8g7f6e5d4c3b2a1",
-    "index.html": "1a2b3c4d5e6f7g8h"
-  },
-  "changelog": []
-}
-```
-
-### With Environment Variables
-
-```javascript
-new AutoUpdateWebpackPlugin({
-  version: process.env.npm_package_version,
-  description: `Build ${process.env.CI_COMMIT_SHA || 'local'}`
-})
-```
-
-### With package.json Version
-
-```javascript
-const package = require('./package.json');
-
-new AutoUpdateWebpackPlugin({
-  version: package.version,
-  changelog: package.changelog || []
-})
-```
-
----
-
-## Vite Plugin (autoUpdatePlugin)
-
-### Installation
-
-Copy the plugin to your project:
+3. Build normally:
 
 ```bash
-cp plugins/vite-plugin.js vite-plugins/
+npm run build
 ```
 
-### Configuration
-
-In `vite.config.js`:
-
-```javascript
-import { defineConfig } from 'vite';
-import autoUpdate from './vite-plugins/vite-plugin';
-
-export default defineConfig({
-  plugins: [
-    autoUpdate({
-      version: '1.0.0',
-      files: ['**/*.js', '**/*.css'],
-      exclude: ['version-manifest.json', '**/*.map'],
-      description: 'Production build'
-    })
-  ]
-});
-```
+The manifest gets generated automatically.
 
 ### Options
 
-Same as Webpack plugin:
-
 ```javascript
 {
-  version: '1.0.0',
-  files: ['**/*.js', '**/*.css', '**/*.html'],
-  exclude: ['version-manifest.json', '**/*.map'],
+  version: '1.0.0',              // Required - your app version
+  files: ['**/*.js', '**/*.css'], // Which files to track
+  exclude: ['**/*.map'],          // Files to ignore
   manifestPath: 'version-manifest.json',
   hashAlgorithm: 'sha256',
   hashLength: 16,
@@ -154,31 +61,65 @@ Same as Webpack plugin:
 }
 ```
 
-### With package.json
+### Use package.json Version
+
+```javascript
+const pkg = require('./package.json');
+
+new AutoUpdateWebpackPlugin({
+  version: pkg.version  // Reads from package.json
+})
+```
+
+Then bump versions the normal way:
+
+```bash
+npm version patch  # 1.0.0 → 1.0.1
+npm run build
+```
+
+---
+
+## Vite Plugin
+
+### Setup
+
+1. Copy the plugin:
+
+```bash
+cp plugins/vite/vite-plugin.js vite-plugins/
+```
+
+2. Add to `vite.config.js`:
 
 ```javascript
 import { defineConfig } from 'vite';
 import autoUpdate from './vite-plugins/vite-plugin';
-import pkg from './package.json';
 
 export default defineConfig({
   plugins: [
     autoUpdate({
-      version: pkg.version,
-      description: `Build ${pkg.version}`
+      version: '1.0.0'
     })
   ]
 });
 ```
 
-### With Environment Variables
+3. Build:
+
+```bash
+npm run build
+```
+
+### With package.json
 
 ```javascript
+import pkg from './package.json';
+
 export default defineConfig({
   plugins: [
     autoUpdate({
-      version: process.env.npm_package_version || '1.0.0',
-      description: process.env.VITE_BUILD_DESC || 'Production build'
+      version: pkg.version
     })
   ]
 });
@@ -201,63 +142,58 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Setup Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Build
-        run: npm run build
-        env:
-          npm_package_version: ${{ github.ref_name }}
-      
-      - name: Deploy
-        run: |
-          # Your deployment command
-          rsync -avz dist/ user@server:/var/www/html/
+      - uses: actions/setup-node@v2
+      - run: npm install
+      - run: npm run build  # Plugin runs automatically
+      - run: npm run deploy
 ```
 
-The plugin automatically generates the manifest during `npm run build`.
+The plugin generates the manifest during build. No extra steps needed.
 
 ### GitLab CI
 
 ```yaml
 build:
-  stage: build
   script:
     - npm install
-    - npm run build
+    - npm run build  # Manifest generated here
   artifacts:
     paths:
       - dist/
-  only:
-    - main
-```
-
-### Manual Version Bumping
-
-If you want to bump versions manually:
-
-```bash
-# Bump version in package.json
-npm version patch  # 1.0.0 → 1.0.1
-npm version minor  # 1.0.0 → 1.1.0
-npm version major  # 1.0.0 → 2.0.0
-
-# Build (plugin uses package.json version)
-npm run build
-
-# Deploy
-npm run deploy
 ```
 
 ---
 
 ## Advanced Usage
+
+### Environment-Specific Builds
+
+```javascript
+const config = {
+  production: {
+    version: '1.0.0',
+    description: 'Production'
+  },
+  staging: {
+    version: '1.0.0-staging',
+    description: 'Staging'
+  }
+};
+
+new AutoUpdateWebpackPlugin(
+  config[process.env.NODE_ENV] || config.production
+)
+```
+
+### Only in Production
+
+```javascript
+plugins: [
+  ...(process.env.NODE_ENV === 'production' ? [
+    new AutoUpdateWebpackPlugin({ version: pkg.version })
+  ] : [])
+]
+```
 
 ### Custom Build Numbers
 
@@ -268,98 +204,55 @@ new AutoUpdateWebpackPlugin({
 })
 ```
 
-### Multiple Environments
-
-```javascript
-const config = {
-  production: {
-    version: '1.0.0',
-    description: 'Production build'
-  },
-  staging: {
-    version: '1.0.0-staging',
-    description: 'Staging build'
-  }
-};
-
-new AutoUpdateWebpackPlugin(
-  config[process.env.NODE_ENV] || config.production
-)
-```
-
-### Conditional Plugin
-
-Only generate manifest in production:
-
-```javascript
-plugins: [
-  // ... other plugins
-  ...(process.env.NODE_ENV === 'production' ? [
-    new AutoUpdateWebpackPlugin({
-      version: package.version
-    })
-  ] : [])
-]
-```
-
----
-
-## Comparison with Manual Script
-
-### Manual (old way)
-
-```bash
-# Edit files
-# Run: node build-version.js patch
-# Build: npm run build
-# Deploy
-```
-
-### With Plugin (new way)
-
-```bash
-# Edit files
-# Build: npm run build  (manifest generated automatically)
-# Deploy
-```
-
-The plugin is integrated into your build process, so you don't need a separate step.
-
 ---
 
 ## Troubleshooting
 
-**Manifest not generated**  
-Check that the plugin is in the `plugins` array and your build completes successfully.
+**Manifest not created**  
+Check that the plugin is in your plugins array and the build completes without errors.
 
-**Wrong files in manifest**  
-Adjust the `files` and `exclude` options to match your build output.
+**Wrong files included**  
+Adjust the `files` and `exclude` patterns to match your build output.
 
 **Version not updating**  
-Make sure you're bumping the version in `package.json` or passing a new version to the plugin.
-
-**Build fails**  
-Check the console for errors. The plugin will log what went wrong.
+Make sure you're bumping the version in package.json before building.
 
 ---
 
 ## Migration from Manual Script
 
-If you're currently using `build-version.js`:
+If you're using `build-version.js` manually:
 
-1. Install the plugin for your build tool
-2. Configure it in your build config
-3. Remove `build-version.js` from your build scripts
-4. Test that manifest is generated correctly
+1. Add the plugin to your build config
+2. Remove the manual script from your workflow
+3. Test that the manifest generates correctly
 
-The plugin does everything the manual script did, but automatically during build.
+The plugin does everything the script did, but automatically.
+
+---
+
+## What Gets Generated
+
+```json
+{
+  "version": "1.0.0",
+  "buildNumber": "20260320120000",
+  "timestamp": "2026-03-20T12:00:00.000Z",
+  "files": {
+    "main.js": "a1b2c3d4e5f6g7h8",
+    "main.css": "h8g7f6e5d4c3b2a1"
+  }
+}
+```
+
+The library uses this to detect when files change and trigger updates.
 
 ---
 
 ## Examples
 
-Complete examples in `plugins/`:
-- `webpack-plugin.js` - Webpack integration
-- `vite-plugin.js` - Vite integration
+See the plugin files for complete examples:
+- `plugins/webpack/webpack-plugin.js`
+- `plugins/vite/vite-plugin.js`
 
-Both include detailed comments and usage examples.
+Both include detailed comments.

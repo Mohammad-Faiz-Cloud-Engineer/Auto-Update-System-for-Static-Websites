@@ -1,141 +1,127 @@
-# Framework Integration Guide
+# Framework Integration
 
-Complete guide for integrating Auto-Update System with React, Vue, and Angular.
+How to use auto-updates with React, Vue, and Angular.
 
-## React Integration
+## React
 
 ### Installation
 
-```bash
-# Add auto-update.js to your public folder
-cp auto-update.js public/
-cp version-manifest.json public/
-```
+Copy `integrations/react/react-integration.jsx` to your project.
 
-### Load the Script
-
-In `public/index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>React App</title>
-    <script src="%PUBLIC_URL%/auto-update.js"></script>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>
-```
-
-### Use the Hook
+### Usage
 
 ```jsx
-import { useAutoUpdate } from './hooks/useAutoUpdate';
+import { useAutoUpdate } from './integrations/react/react-integration';
 
 function App() {
-  const {
-    updateAvailable,
-    currentVersion,
-    newVersion,
+  const { 
+    updateAvailable, 
     applyUpdate,
-    checkNow
+    currentVersion,
+    newVersion 
   } = useAutoUpdate({
     manifestUrl: '/version-manifest.json',
-    checkInterval: 30000,
-    rolloutPercentage: 1.0
+    checkInterval: 30000
   });
 
   return (
     <div>
-      <header>
-        <h1>My App</h1>
-        <span>Version: {currentVersion}</span>
-        <button onClick={checkNow}>Check Updates</button>
-      </header>
-
+      <h1>My App v{currentVersion}</h1>
+      
       {updateAvailable && (
         <div className="update-banner">
-          <p>Version {newVersion} available!</p>
+          <p>Version {newVersion} is available!</p>
           <button onClick={applyUpdate}>Update Now</button>
         </div>
+      )}
+      
+      {/* Your app content */}
+    </div>
+  );
+}
+```
+
+### With Notification Component
+
+```jsx
+import { useAutoUpdate, UpdateNotification } from './integrations/react/react-integration';
+
+function App() {
+  const { updateAvailable, applyUpdate } = useAutoUpdate();
+  const [showNotification, setShowNotification] = useState(false);
+
+  useEffect(() => {
+    if (updateAvailable) setShowNotification(true);
+  }, [updateAvailable]);
+
+  return (
+    <div>
+      {/* Your app */}
+      
+      {showNotification && (
+        <UpdateNotification
+          onUpdate={() => {
+            setShowNotification(false);
+            applyUpdate();
+          }}
+          onDismiss={() => setShowNotification(false)}
+        />
       )}
     </div>
   );
 }
 ```
 
-See `examples/react-integration.jsx` for the complete implementation.
-
----
-
-## Vue Integration
+## Vue
 
 ### Installation
 
-```bash
-# Add auto-update.js to your public folder
-cp auto-update.js public/
-cp version-manifest.json public/
-```
+Copy `integrations/vue/vue-integration.vue` to your project.
 
-### Load the Script
-
-In `public/index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Vue App</title>
-    <script src="/auto-update.js"></script>
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
-</html>
-```
-
-### Vue 3 Composition API
+### Vue 3 (Composition API)
 
 ```vue
 <script setup>
-import { useAutoUpdate } from './composables/useAutoUpdate';
+import { useAutoUpdate } from './integrations/vue/vue-integration';
 
-const {
-  updateAvailable,
-  currentVersion,
-  newVersion,
+const { 
+  updateAvailable, 
   applyUpdate,
-  checkNow
+  currentVersion,
+  newVersion 
 } = useAutoUpdate({
-  manifestUrl: '/version-manifest.json',
-  rolloutPercentage: 1.0
+  manifestUrl: '/version-manifest.json'
 });
 </script>
 
 <template>
-  <div class="app">
-    <header>
-      <h1>My App</h1>
-      <span>Version: {{ currentVersion }}</span>
-      <button @click="checkNow">Check Updates</button>
-    </header>
-
+  <div>
+    <h1>My App v{{ currentVersion }}</h1>
+    
     <div v-if="updateAvailable" class="update-banner">
-      <p>Version {{ newVersion }} available!</p>
+      <p>Version {{ newVersion }} is available!</p>
       <button @click="applyUpdate">Update Now</button>
     </div>
+    
+    <!-- Your app content -->
   </div>
 </template>
 ```
 
-### Vue 2/3 Options API
+### Vue 2 (Options API)
 
 ```vue
+<template>
+  <div>
+    <h1>My App v{{ currentVersion }}</h1>
+    
+    <div v-if="updateAvailable" class="update-banner">
+      <p>Version {{ newVersion }} is available!</p>
+      <button @click="applyUpdate">Update Now</button>
+    </div>
+  </div>
+</template>
+
 <script>
 export default {
   data() {
@@ -145,291 +131,200 @@ export default {
       newVersion: null
     };
   },
-
+  
   mounted() {
-    window.AutoUpdate.init({
-      manifestUrl: '/version-manifest.json',
-      forceUpdate: false,
-      showNotification: false,
-      onUpdateAvailable: (newVer, oldVer) => {
-        this.updateAvailable = true;
-        this.currentVersion = oldVer;
-        this.newVersion = newVer;
-      }
-    });
+    this.initAutoUpdate();
   },
-
+  
   beforeUnmount() {
-    window.AutoUpdate.destroy();
+    window.AutoUpdate?.destroy();
+  },
+  
+  methods: {
+    initAutoUpdate() {
+      window.AutoUpdate.init({
+        manifestUrl: '/version-manifest.json',
+        showNotification: false,
+        forceUpdate: false,
+        
+        onUpdateAvailable: (newVer, oldVer) => {
+          this.updateAvailable = true;
+          this.currentVersion = oldVer;
+          this.newVersion = newVer;
+        }
+      });
+    },
+    
+    applyUpdate() {
+      window.AutoUpdate.applyUpdate();
+    }
   }
 };
 </script>
 ```
 
-See `examples/vue-integration.vue` for the complete implementation.
-
----
-
-## Angular Integration
+## Angular
 
 ### Installation
 
-```bash
-# Add auto-update.js to your assets folder
-cp auto-update.js src/assets/
-cp version-manifest.json src/assets/
-```
-
-### Load the Script
-
-In `src/index.html`:
-
-```html
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <title>Angular App</title>
-  <base href="/">
-  <script src="assets/auto-update.js"></script>
-</head>
-<body>
-  <app-root></app-root>
-</body>
-</html>
-```
-
-### Create the Service
+1. Copy `integrations/angular/angular-integration.ts` to your project
+2. Add to `app.module.ts`:
 
 ```typescript
-import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { AutoUpdateService } from './integrations/angular/angular-integration';
 
-@Injectable({
-  providedIn: 'root'
+@NgModule({
+  providers: [AutoUpdateService]
 })
-export class AutoUpdateService {
-  private updateAvailable$ = new BehaviorSubject<boolean>(false);
-  private currentVersion$ = new BehaviorSubject<string | null>(null);
-  private newVersion$ = new BehaviorSubject<string | null>(null);
-
-  constructor() {
-    this.initAutoUpdate();
-  }
-
-  private initAutoUpdate(): void {
-    (window as any).AutoUpdate.init({
-      manifestUrl: '/assets/version-manifest.json',
-      forceUpdate: false,
-      showNotification: false,
-      rolloutPercentage: 1.0,
-      onUpdateAvailable: (newVer: string, oldVer: string) => {
-        this.updateAvailable$.next(true);
-        this.currentVersion$.next(oldVer);
-        this.newVersion$.next(newVer);
-      }
-    });
-  }
-
-  getUpdateAvailable(): Observable<boolean> {
-    return this.updateAvailable$.asObservable();
-  }
-
-  getCurrentVersion(): Observable<string | null> {
-    return this.currentVersion$.asObservable();
-  }
-
-  applyUpdate(): void {
-    (window as any).AutoUpdate.applyUpdate();
-  }
-}
+export class AppModule { }
 ```
 
-### Use in Component
+### Usage in Component
 
 ```typescript
-import { Component, OnInit } from '@angular/core';
-import { AutoUpdateService } from './services/auto-update.service';
+import { Component } from '@angular/core';
+import { AutoUpdateService } from './integrations/angular/angular-integration';
 
 @Component({
   selector: 'app-root',
   template: `
-    <div class="app">
-      <header>
-        <h1>My App</h1>
-        <span>Version: {{ currentVersion$ | async }}</span>
-        <button (click)="checkUpdates()">Check Updates</button>
-      </header>
-
+    <div>
+      <h1>My App v{{ currentVersion$ | async }}</h1>
+      
       <div *ngIf="updateAvailable$ | async" class="update-banner">
-        <p>New version available!</p>
+        <p>Version {{ newVersion$ | async }} is available!</p>
         <button (click)="applyUpdate()">Update Now</button>
       </div>
+      
+      <!-- Your app content -->
     </div>
   `
 })
-export class AppComponent implements OnInit {
-  updateAvailable$ = this.autoUpdate.getUpdateAvailable();
-  currentVersion$ = this.autoUpdate.getCurrentVersion();
+export class AppComponent {
+  updateAvailable$ = this.autoUpdate.updateAvailable$;
+  currentVersion$ = this.autoUpdate.currentVersion$;
+  newVersion$ = this.autoUpdate.newVersion$;
 
   constructor(private autoUpdate: AutoUpdateService) {}
 
-  ngOnInit(): void {}
-
-  applyUpdate(): void {
+  applyUpdate() {
     this.autoUpdate.applyUpdate();
-  }
-
-  checkUpdates(): void {
-    (window as any).AutoUpdate.checkNow();
   }
 }
 ```
 
-See `examples/angular-integration.ts` for the complete implementation.
+### With Notification Component
 
----
+```typescript
+import { UpdateNotificationComponent } from './integrations/angular/angular-integration';
 
-## Progressive Rollout
+@NgModule({
+  declarations: [
+    AppComponent,
+    UpdateNotificationComponent  // Add this
+  ]
+})
+export class AppModule { }
+```
 
-Update only a percentage of users:
+Then in your template:
+
+```html
+<app-update-notification></app-update-notification>
+```
+
+## TypeScript
+
+If you're using TypeScript, copy `types/auto-update.d.ts` to your project for full type support.
+
+```typescript
+import { AutoUpdate } from 'auto-update';
+
+// Full autocomplete and type checking
+AutoUpdate.init({
+  manifestUrl: '/version-manifest.json',
+  checkInterval: 30000,
+  onUpdateAvailable: (newVer: string, oldVer: string) => {
+    console.log(`Update: ${oldVer} → ${newVer}`);
+  }
+});
+```
+
+## Common Patterns
+
+### Show Update Banner
 
 ```javascript
 // React
-useAutoUpdate({
-  manifestUrl: '/version-manifest.json',
-  rolloutPercentage: 0.1  // 10% of users
-});
+{updateAvailable && <UpdateBanner />}
 
 // Vue
-useAutoUpdate({
-  manifestUrl: '/version-manifest.json',
-  rolloutPercentage: 0.5  // 50% of users
-});
+<div v-if="updateAvailable">...</div>
 
 // Angular
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  rolloutPercentage: 0.25  // 25% of users
-});
+<div *ngIf="updateAvailable$ | async">...</div>
 ```
 
-Each user gets a stable ID, so they consistently either get or don't get the update.
-
----
-
-## TypeScript Support
-
-All frameworks have full TypeScript support:
-
-```typescript
-import type { AutoUpdate } from 'auto-update';
-
-const config: AutoUpdate.Config = {
-  manifestUrl: '/version-manifest.json',
-  checkInterval: 30000,
-  forceUpdate: false,
-  rolloutPercentage: 1.0,
-  onUpdateAvailable: (newVersion: string, oldVersion: string) => {
-    console.log(`Update: ${oldVersion} → ${newVersion}`);
-  }
-};
-```
-
----
-
-## Testing
-
-### React Testing Library
-
-```jsx
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import App from './App';
-
-test('shows update notification', async () => {
-  // Mock AutoUpdate
-  window.AutoUpdate = {
-    init: jest.fn(),
-    checkNow: jest.fn(),
-    applyUpdate: jest.fn(),
-    getVersion: () => '1.0.0'
-  };
-
-  render(<App />);
-  
-  // Trigger update callback
-  const callback = window.AutoUpdate.init.mock.calls[0][0].onUpdateAvailable;
-  callback('1.0.1', '1.0.0');
-
-  await waitFor(() => {
-    expect(screen.getByText(/new version available/i)).toBeInTheDocument();
-  });
-});
-```
-
-### Vue Test Utils
+### Manual Check Button
 
 ```javascript
-import { mount } from '@vue/test-utils';
-import App from './App.vue';
+// React
+<button onClick={() => AutoUpdate.checkNow()}>
+  Check for Updates
+</button>
 
-test('shows update notification', async () => {
-  window.AutoUpdate = {
-    init: jest.fn(),
-    destroy: jest.fn(),
-    getVersion: () => '1.0.0'
-  };
+// Vue
+<button @click="checkForUpdates">
+  Check for Updates
+</button>
 
-  const wrapper = mount(App);
-  
-  // Trigger update
-  const callback = window.AutoUpdate.init.mock.calls[0][0].onUpdateAvailable;
-  callback('1.0.1', '1.0.0');
-
-  await wrapper.vm.$nextTick();
-  
-  expect(wrapper.text()).toContain('new version available');
-});
+// Angular
+<button (click)="checkForUpdates()">
+  Check for Updates
+</button>
 ```
 
-### Angular Testing
+### Disable Auto-Updates
 
-```typescript
-import { TestBed } from '@angular/core/testing';
-import { AutoUpdateService } from './auto-update.service';
+```javascript
+// React
+useEffect(() => {
+  AutoUpdate.disable();
+  return () => AutoUpdate.enable();
+}, []);
 
-describe('AutoUpdateService', () => {
-  let service: AutoUpdateService;
+// Vue
+onMounted(() => AutoUpdate.disable());
+onUnmounted(() => AutoUpdate.enable());
 
-  beforeEach(() => {
-    (window as any).AutoUpdate = {
-      init: jest.fn(),
-      destroy: jest.fn()
-    };
-
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(AutoUpdateService);
-  });
-
-  it('should initialize AutoUpdate', () => {
-    expect((window as any).AutoUpdate.init).toHaveBeenCalled();
-  });
-});
+// Angular
+ngOnInit() {
+  this.autoUpdate.disable();
+}
 ```
-
----
 
 ## Troubleshooting
 
-**AutoUpdate is undefined**  
-Make sure the script is loaded before your app initializes. Add it to `index.html`, not imported in JS.
+### Hook Not Working (React)
 
-**Updates not detected in development**  
-Development servers often have their own hot reload. Test in production build.
+Make sure `auto-update.js` is loaded before your React app:
 
-**TypeScript errors**  
-Make sure `auto-update.d.ts` is in your project and referenced in `tsconfig.json`:
+```html
+<script src="/auto-update.js"></script>
+<script src="/your-react-app.js"></script>
+```
+
+### Composable Not Working (Vue)
+
+Same as React - load the script first.
+
+### Service Not Injecting (Angular)
+
+Make sure `AutoUpdateService` is in your module's `providers` array.
+
+### TypeScript Errors
+
+Copy `types/auto-update.d.ts` to your project and add to `tsconfig.json`:
 
 ```json
 {
@@ -438,24 +333,3 @@ Make sure `auto-update.d.ts` is in your project and referenced in `tsconfig.json
   }
 }
 ```
-
----
-
-## Best Practices
-
-1. **Don't force update during user actions** - Let them finish what they're doing
-2. **Show clear notifications** - Tell users what's happening
-3. **Test rollout percentages** - Start with 10%, then increase
-4. **Handle errors gracefully** - Don't break the app if update fails
-5. **Log update events** - Track adoption in analytics
-
----
-
-## Examples
-
-All complete examples are in the `examples/` folder:
-- `react-integration.jsx`
-- `vue-integration.vue`
-- `angular-integration.ts`
-
-Copy and adapt them for your project.

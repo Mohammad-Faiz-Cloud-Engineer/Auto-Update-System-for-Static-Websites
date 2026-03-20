@@ -1,225 +1,114 @@
 # Integration Guide
 
-Complete instructions for adding auto-updates to your website.
+How to add auto-updates to your website in 5 minutes.
 
-## Prerequisites
+## Step 1: Download Files
 
-- A static HTML/CSS/JS website
-- Access to your web server
-- 5 minutes
+Grab these files from the `dist/` folder:
+- `auto-update.js` - The main library
+- `auto-update-sw.js` - Service Worker (optional, for offline mode)
 
-## Installation
+Put them in your public folder.
 
-### Step 1: Download Files
+## Step 2: Add the Script
 
-Download these files from the repository:
-- `auto-update.js`
-- `version-manifest.json`
-
-### Step 2: Add to Your Project
-
-Place both files in your website's root directory:
-
-```
-your-website/
-├── index.html
-├── css/
-├── js/
-├── auto-update.js          ← Add here
-└── version-manifest.json   ← Add here
-```
-
-### Step 3: Configure Version Manifest
-
-Edit `version-manifest.json` and set your starting version:
-
-```json
-{
-  "version": "1.0.0",
-  "buildNumber": "20260319001",
-  "timestamp": "2026-03-19T10:00:00Z",
-  "description": "Initial release"
-}
-```
-
-### Step 4: Add Script to HTML
-
-Add this code to **all your HTML files** before the closing `</body>` tag:
+Add this to your HTML:
 
 ```html
-<!-- Auto-Update System -->
-<script src="auto-update.js"></script>
+<script src="/auto-update.js"></script>
 <script>
   AutoUpdate.init({
     manifestUrl: '/version-manifest.json',
-    checkInterval: 30000,
-    forceUpdate: true,
-    debug: false
+    checkInterval: 30000  // Check every 30 seconds
   });
 </script>
 ```
 
-### Step 5: Upload to Server
+## Step 3: Create Version Manifest
 
-Upload all files to your web server. Done!
+Create `version-manifest.json` in your public folder:
 
-## Configuration
-
-### Development Environment
-
-Use these settings while developing:
-
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  checkInterval: 10000,  // Check more frequently
-  forceUpdate: false,    // Don't auto-reload
-  debug: true            // See what's happening
-});
+```json
+{
+  "version": "1.0.0",
+  "buildNumber": "20260320120000",
+  "timestamp": "2026-03-20T12:00:00.000Z"
+}
 ```
 
-### Production Environment
+## Step 4: Update on Deploy
 
-Use these settings for production:
-
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  checkInterval: 60000,  // Check every minute
-  forceUpdate: true,     // Auto-reload on update
-  debug: false           // No console logs
-});
-```
-
-## Deploying Updates
-
-### Manual Method
-
-When you update your website:
-
-1. Make your changes (edit HTML, CSS, JS, etc.)
-2. Edit `version-manifest.json`:
-   ```json
-   {
-     "version": "1.0.1",  ← Increment this
-     "timestamp": "2026-03-19T11:00:00Z"
-   }
-   ```
-3. Upload all files to your server
-
-Users will get the update automatically.
-
-### Automated Method
-
-If you have Node.js:
+When you deploy, bump the version:
 
 ```bash
-# Make your changes first, then:
-node build-version.js patch  # Bumps version automatically
-# Upload files to server
+node build-version.js patch  # 1.0.0 → 1.0.1
 ```
 
-## Testing
+Or manually edit the JSON file.
 
-### Test 1: Verify Installation
+## Step 5: Test It
 
-1. Open your website
-2. Press F12 to open browser console
-3. Look for: `[AutoUpdate] System initialized successfully`
+1. Open your site
+2. Change the version in `version-manifest.json`
+3. Wait 30 seconds
+4. Page should reload automatically
 
-If you see this, installation worked!
+Done!
 
-### Test 2: Test Update Detection
+## Optional: Add Service Worker (v2.2)
 
-1. Keep your browser open on your website
-2. Edit `version-manifest.json` on your server
-3. Change version from `1.0.0` to `1.0.1`
-4. Wait 30 seconds
-5. You should see an update notification or page reload
-
-### Test 3: Manual Check
-
-Add a test button:
+For offline support and faster loads:
 
 ```html
-<button onclick="AutoUpdate.checkNow()">Check for Updates</button>
+<script src="/auto-update.js"></script>
+<script>
+  AutoUpdate.init({
+    manifestUrl: '/version-manifest.json',
+    checkInterval: 30000,
+    
+    // Enable offline mode
+    serviceWorker: true,
+    serviceWorkerUrl: '/auto-update-sw.js',
+    offlineFirst: true,
+    backgroundSync: true,
+    deltaUpdates: true
+  });
+</script>
 ```
 
-Click it to trigger an immediate check.
+Make sure `auto-update-sw.js` is in your public folder.
 
-## Troubleshooting
-
-### Updates Not Detected
-
-**Check these:**
-- Is the manifest URL correct?
-- Did you actually change the version number?
-- Is your server running?
-- Any errors in browser console?
-
-**Solution:**
-```javascript
-// Enable debug mode to see what's happening
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  debug: true
-});
-```
-
-### Notification Not Showing
-
-**Check these:**
-- Is `forceUpdate` set to `false`?
-- Is `showNotification` set to `true`?
-- Any CSS conflicts?
-
-**Solution:**
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  forceUpdate: false,        // Must be false
-  showNotification: true     // Must be true
-});
-```
-
-### Page Reloads Constantly
-
-**Check these:**
-- Is version format correct? (e.g., "1.0.0")
-- Is localStorage working?
-
-**Solution:**
-```javascript
-// Clear localStorage and restart
-localStorage.clear();
-location.reload();
-```
-
-### Works Locally But Not on Server
-
-**Check these:**
-- Use absolute paths: `/version-manifest.json`
-- Is HTTPS enabled? (required for Service Workers)
-- Check CORS settings if manifest is on different domain
-
-## Advanced Configuration
-
-### Custom Callbacks
-
-Track updates in your analytics:
+## Configuration Options
 
 ```javascript
 AutoUpdate.init({
+  // Required
   manifestUrl: '/version-manifest.json',
-  onUpdateAvailable: (newVersion, oldVersion) => {
-    // Google Analytics
-    gtag('event', 'update_available', {
-      old_version: oldVersion,
-      new_version: newVersion
-    });
+  
+  // Basic
+  checkInterval: 30000,        // How often to check (ms)
+  forceUpdate: true,           // Auto-reload or show notification
+  showNotification: true,      // Show update notification
+  debug: false,                // Console logging
+  
+  // Advanced
+  retryAttempts: 3,            // Retry failed checks
+  retryDelay: 5000,            // Delay between retries (ms)
+  rolloutPercentage: 1.0,      // Update X% of users (0.0 to 1.0)
+  
+  // v2.2 - Offline
+  serviceWorker: true,         // Enable Service Worker
+  serviceWorkerUrl: '/auto-update-sw.js',
+  offlineFirst: true,          // Cache-first strategy
+  backgroundSync: true,        // Background updates
+  deltaUpdates: true,          // Only download changed files
+  
+  // Callbacks
+  onUpdateAvailable: (newVer, oldVer) => {
+    console.log(`Update: ${oldVer} → ${newVer}`);
   },
   onUpdateComplete: (version) => {
-    gtag('event', 'update_completed', { version });
+    console.log(`Updated to ${version}`);
   },
   onError: (error) => {
     console.error('Update failed:', error);
@@ -227,115 +116,90 @@ AutoUpdate.init({
 });
 ```
 
-### Custom Notification
+## Server Configuration
 
-Replace the default notification:
+For best results, configure your server to not cache the manifest:
 
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  showNotification: false,  // Disable default
-  onUpdateAvailable: (newVersion) => {
-    // Show your own UI
-    alert(`New version ${newVersion} available!`);
-  }
-});
-```
+### Nginx
 
-### Gradual Rollout
-
-Update only a percentage of users:
-
-```javascript
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  onUpdateAvailable: (newVersion) => {
-    // Only update 10% of users
-    if (Math.random() < 0.1) {
-      AutoUpdate.applyUpdate();
-    }
-  }
-});
-```
-
-## CI/CD Integration
-
-### GitHub Actions
-
-Create `.github/workflows/deploy.yml`:
-
-```yaml
-name: Deploy
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      
-      - name: Bump version
-        run: node build-version.js patch
-      
-      - name: Deploy to server
-        run: |
-          # Your deployment command here
-          rsync -avz ./ user@server:/var/www/html/
-```
-
-### With npm Scripts
-
-Add to `package.json`:
-
-```json
-{
-  "scripts": {
-    "deploy": "node build-version.js patch && npm run upload",
-    "upload": "rsync -avz ./ user@server:/var/www/html/"
-  }
+```nginx
+location /version-manifest.json {
+  add_header Cache-Control "no-store, no-cache, must-revalidate";
+  add_header Pragma "no-cache";
+  add_header Expires "0";
 }
 ```
 
-Then deploy with:
+### Apache
 
-```bash
-npm run deploy
+```apache
+<Files "version-manifest.json">
+  Header set Cache-Control "no-store, no-cache, must-revalidate, max-age=0"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</Files>
 ```
 
-## Best Practices
+### Node.js/Express
 
-### Version Numbering
+```javascript
+app.get('/version-manifest.json', (req, res) => {
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  res.sendFile('version-manifest.json');
+});
+```
 
-Use semantic versioning:
-- **Patch** (1.0.0 → 1.0.1): Bug fixes
-- **Minor** (1.0.0 → 1.1.0): New features
-- **Major** (1.0.0 → 2.0.0): Breaking changes
+## Troubleshooting
 
-### Check Intervals
+### Updates Not Working
 
-- Development: 10-30 seconds
-- Production: 30-60 seconds
-- Don't check too frequently (server load)
+**Check the console** - Enable debug mode:
+```javascript
+AutoUpdate.init({ debug: true, ... });
+```
 
-### User Experience
+**Check the manifest** - Make sure it's accessible:
+```bash
+curl https://yoursite.com/version-manifest.json
+```
 
-- Use `forceUpdate: false` for major updates
-- Let users finish their work before updating
-- Show clear update messages
+**Check the version** - Make sure it changed:
+```javascript
+// Old version
+{ "version": "1.0.0" }
 
-### Testing
+// New version
+{ "version": "1.0.1" }
+```
 
-- Always test in staging first
-- Test with different browsers
-- Test with slow connections
-- Test offline behavior
+### Page Not Reloading
 
-## Support
+Set `forceUpdate: true`:
+```javascript
+AutoUpdate.init({
+  forceUpdate: true,  // Auto-reload
+  ...
+});
+```
 
-Need help?
+### Service Worker Not Working
 
-- 📖 [Main Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites/issues)
-- 💬 [Discussions](https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites/discussions)
+**Check HTTPS** - Service Workers require HTTPS (except localhost)
+
+**Check the file** - Make sure `auto-update-sw.js` is accessible:
+```bash
+curl https://yoursite.com/auto-update-sw.js
+```
+
+**Check registration** - Open DevTools → Application → Service Workers
+
+### Still Stuck?
+
+Open an issue on GitHub with:
+- Your configuration
+- Console errors
+- Browser and version

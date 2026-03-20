@@ -2,7 +2,7 @@
  * Auto-Update System for Static Websites
  * TypeScript Definitions
  * 
- * @version 2.1.0
+ * @version 2.2.0
  * @license MIT
  */
 
@@ -10,7 +10,7 @@ declare namespace AutoUpdate {
   /**
    * Configuration options for the auto-update system
    */
-  interface Config {
+  interface AutoUpdateConfig {
     /**
      * URL to the version manifest file (required)
      */
@@ -71,6 +71,42 @@ declare namespace AutoUpdate {
     rolloutPercentage?: number;
 
     /**
+     * Enable Service Worker integration (v2.2)
+     * @default true
+     */
+    serviceWorker?: boolean;
+
+    /**
+     * Service Worker script URL (v2.2)
+     * @default '/auto-update-sw.js'
+     */
+    serviceWorkerUrl?: string;
+
+    /**
+     * Enable offline-first mode (v2.2)
+     * @default true
+     */
+    offlineFirst?: boolean;
+
+    /**
+     * Enable background sync (v2.2)
+     * @default true
+     */
+    backgroundSync?: boolean;
+
+    /**
+     * Enable delta updates - only download changed files (v2.2)
+     * @default true
+     */
+    deltaUpdates?: boolean;
+
+    /**
+     * URLs to precache on Service Worker install (v2.2)
+     * @default []
+     */
+    precacheUrls?: string[];
+
+    /**
      * Callback fired when an update is available
      */
     onUpdateAvailable?: (newVersion: string, oldVersion: string) => void;
@@ -84,6 +120,11 @@ declare namespace AutoUpdate {
      * Callback fired when an error occurs
      */
     onError?: (error: Error) => void;
+
+    /**
+     * Callback fired when Service Worker updates (v2.2)
+     */
+    onServiceWorkerUpdate?: (worker: ServiceWorker) => void;
   }
 
   /**
@@ -127,6 +168,62 @@ declare namespace AutoUpdate {
   }
 
   /**
+   * Auto-Update API interface
+   */
+  interface AutoUpdateAPI {
+    /**
+     * Library version
+     */
+    version: string;
+
+    /**
+     * Initialize the auto-update system
+     * @param config Configuration options
+     * @returns true if initialization succeeded, false otherwise
+     */
+    init(config: AutoUpdateConfig): boolean;
+
+    /**
+     * Destroy the auto-update system and clean up resources
+     */
+    destroy(): void;
+
+    /**
+     * Manually trigger an update check
+     * @returns Promise that resolves when check is complete
+     */
+    checkNow(): Promise<void>;
+
+    /**
+     * Force apply an update immediately
+     * @returns Promise that resolves when update is applied
+     */
+    applyUpdate(): Promise<void>;
+
+    /**
+     * Get the current version
+     * @returns Current version string or null if not set
+     */
+    getVersion(): string | null;
+
+    /**
+     * Enable the auto-update system
+     */
+    enable(): void;
+
+    /**
+     * Disable the auto-update system
+     */
+    disable(): void;
+
+    /**
+     * Check if the auto-update system is enabled
+     * @returns true if enabled, false otherwise
+     */
+    isEnabled(): boolean;
+  }
+
+  /**
    * Library version
    */
   const version: string;
@@ -136,7 +233,7 @@ declare namespace AutoUpdate {
    * @param config Configuration options
    * @returns true if initialization succeeded, false otherwise
    */
-  function init(config: Config): boolean;
+  function init(config: AutoUpdateConfig): boolean;
 
   /**
    * Destroy the auto-update system and clean up resources
@@ -153,7 +250,7 @@ declare namespace AutoUpdate {
    * Force apply an update immediately
    * @returns Promise that resolves when update is applied
    */
-  function applyUpdate(): Promise<void>;
+  function applyUpdate(): Promise<void;
 
   /**
    * Get the current version
@@ -176,6 +273,24 @@ declare namespace AutoUpdate {
    * @returns true if enabled, false otherwise
    */
   function isEnabled(): boolean;
+
+  /**
+   * Get Service Worker registration (v2.2)
+   * @returns ServiceWorkerRegistration or null
+   */
+  function getServiceWorker(): ServiceWorkerRegistration | null;
+
+  /**
+   * Check if app is offline (v2.2)
+   * @returns true if offline, false if online
+   */
+  function isOffline(): boolean;
+
+  /**
+   * Manually trigger background sync (v2.2)
+   * @returns Promise that resolves when sync is registered
+   */
+  function syncNow(): Promise<boolean>;
 }
 
 /**
