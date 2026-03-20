@@ -150,6 +150,11 @@
       
       const text = await response.text();
       
+      // Validate response size (prevent DoS)
+      if (text.length > 1024 * 1024) { // 1MB limit
+        throw new Error('Manifest file too large (>1MB)');
+      }
+      
       // Validate JSON before parsing
       if (!text || text.trim().length === 0) {
         throw new Error('Empty manifest response');
