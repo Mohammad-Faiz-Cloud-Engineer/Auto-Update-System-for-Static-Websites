@@ -10,7 +10,7 @@ declare namespace AutoUpdate {
   /**
    * Configuration options for the auto-update system
    */
-  interface Config {
+  interface AutoUpdateConfig {
     /**
      * URL to the version manifest file (required)
      */
@@ -127,6 +127,62 @@ declare namespace AutoUpdate {
   }
 
   /**
+   * Auto-Update API interface
+   */
+  interface AutoUpdateAPI {
+    /**
+     * Library version
+     */
+    version: string;
+
+    /**
+     * Initialize the auto-update system
+     * @param config Configuration options
+     * @returns true if initialization succeeded, false otherwise
+     */
+    init(config: AutoUpdateConfig): boolean;
+
+    /**
+     * Destroy the auto-update system and clean up resources
+     */
+    destroy(): void;
+
+    /**
+     * Manually trigger an update check
+     * @returns Promise that resolves when check is complete
+     */
+    checkNow(): Promise<void>;
+
+    /**
+     * Force apply an update immediately
+     * @returns Promise that resolves when update is applied
+     */
+    applyUpdate(): Promise<void>;
+
+    /**
+     * Get the current version
+     * @returns Current version string or null if not set
+     */
+    getVersion(): string | null;
+
+    /**
+     * Enable the auto-update system
+     */
+    enable(): void;
+
+    /**
+     * Disable the auto-update system
+     */
+    disable(): void;
+
+    /**
+     * Check if the auto-update system is enabled
+     * @returns true if enabled, false otherwise
+     */
+    isEnabled(): boolean;
+  }
+
+  /**
    * Library version
    */
   const version: string;
@@ -136,7 +192,7 @@ declare namespace AutoUpdate {
    * @param config Configuration options
    * @returns true if initialization succeeded, false otherwise
    */
-  function init(config: Config): boolean;
+  function init(config: AutoUpdateConfig): boolean;
 
   /**
    * Destroy the auto-update system and clean up resources
@@ -153,7 +209,7 @@ declare namespace AutoUpdate {
    * Force apply an update immediately
    * @returns Promise that resolves when update is applied
    */
-  function applyUpdate(): Promise<void>;
+  function applyUpdate(): Promise<void;
 
   /**
    * Get the current version

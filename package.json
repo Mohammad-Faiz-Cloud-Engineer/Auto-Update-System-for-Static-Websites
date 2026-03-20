@@ -14,7 +14,8 @@
   "scripts": {
     "test": "node test/run-tests.js",
     "test:security": "node test/security-tests.js",
-    "test:all": "npm run test && npm run test:security",
+    "test:integration": "node test/integration-tests.js",
+    "test:all": "npm run test && npm run test:security && npm run test:integration",
     "build": "node src/build-version.js patch",
     "build:minor": "node src/build-version.js minor",
     "build:major": "node src/build-version.js major",

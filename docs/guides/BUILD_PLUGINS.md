@@ -107,7 +107,7 @@ new AutoUpdateWebpackPlugin({
 
 ---
 
-## Vite Plugin
+## Vite Plugin (autoUpdatePlugin)
 
 ### Installation
 

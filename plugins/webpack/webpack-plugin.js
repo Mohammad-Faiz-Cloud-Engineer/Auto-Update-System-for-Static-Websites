@@ -17,7 +17,7 @@ class AutoUpdateWebpackPlugin {
       version: options.version || process.env.npm_package_version || '1.0.0',
       files: options.files || ['**/*.js', '**/*.css', '**/*.html'],
       exclude: options.exclude || ['version-manifest.json'],
-      hashAlgorithm: 'sha256',
+      hashAlgorithm: 'sha256', // SHA-256 for security
       hashLength: 16,
       ...options
     };
@@ -52,8 +52,7 @@ class AutoUpdateWebpackPlugin {
     for (const filename in assets) {
       if (this.shouldIncludeFile(filename)) {
         const source = assets[filename].source();
-        const hash = crypto
-          .createHash(this.options.hashAlgorithm)
+        const hash = crypto.createHash(this.options.hashAlgorithm)
           .update(source)
           .digest('hex')
           .substring(0, this.options.hashLength);

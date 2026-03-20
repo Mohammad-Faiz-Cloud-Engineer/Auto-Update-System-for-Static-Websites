@@ -19,7 +19,7 @@ export default function autoUpdatePlugin(options = {}) {
     version: options.version || process.env.npm_package_version || '1.0.0',
     files: options.files || ['**/*.js', '**/*.css', '**/*.html'],
     exclude: options.exclude || ['version-manifest.json'],
-    hashAlgorithm: 'sha256',
+    hashAlgorithm: 'sha256', // SHA-256 for security
     hashLength: 16,
     ...options
   };
@@ -61,8 +61,7 @@ function generateManifest(bundle, config) {
   for (const [filename, file] of Object.entries(bundle)) {
     if (shouldIncludeFile(filename, config)) {
       const source = file.type === 'chunk' ? file.code : file.source;
-      const hash = crypto
-        .createHash(config.hashAlgorithm)
+      const hash = crypto.createHash(config.hashAlgorithm)
         .update(source)
         .digest('hex')
         .substring(0, config.hashLength);

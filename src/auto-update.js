@@ -4,7 +4,7 @@
  * Automatically detects and applies updates to static websites by checking
  * version manifests and clearing browser caches when new versions are available.
  * 
- * @version 2.0.0
+ * @version 2.1.0
  * @license MIT
  * @author Mohammad Faiz
  * @repository https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites
@@ -14,7 +14,7 @@
   'use strict';
 
   // Version
-  const LIBRARY_VERSION = '2.0.0';
+  const LIBRARY_VERSION = '2.1.0';
   
   // Storage keys
   const STORAGE_KEY_VERSION = 'auto_update_current_version';
@@ -32,6 +32,7 @@
     notificationDuration: 0,      // 0 = stay until action (milliseconds)
     retryAttempts: 3,             // Retry failed checks
     retryDelay: 5000,             // Delay between retries (ms)
+    rolloutPercentage: 1.0,       // 1.0 = 100% of users (progressive rollout)
     onUpdateAvailable: null,      // Callback
     onUpdateComplete: null,       // Callback
     onError: null                 // Callback
@@ -332,6 +333,48 @@
       logError('Failed to clear caches:', error);
       return false;
     }
+  }
+  
+  /**
+   * Check if this user should receive the update (progressive rollout)
+   */
+  function shouldRollout() {
+    // If rolloutPercentage is 1.0 (100%), always update
+    if (config.rolloutPercentage >= 1.0) {
+      return true;
+    }
+    
+    // If rolloutPercentage is 0, never update
+    if (config.rolloutPercentage <= 0) {
+      return false;
+    }
+    
+    // Get or create a stable user ID for consistent rollout
+    let userId = localStorage.getItem('auto_update_user_id');
+    if (!userId) {
+      // Generate a random user ID (0-1)
+      userId = Math.random().toString();
+      try {
+        localStorage.setItem('auto_update_user_id', userId);
+      } catch (e) {
+        // If localStorage fails, use session-based ID
+        userId = Math.random().toString();
+      }
+    }
+    
+    // Convert user ID to a number between 0 and 1
+    const userHash = parseFloat(userId);
+    
+    // User gets update if their hash is less than rollout percentage
+    const shouldUpdate = userHash < config.rolloutPercentage;
+    
+    log('Progressive rollout check:', {
+      rolloutPercentage: config.rolloutPercentage,
+      userHash: userHash.toFixed(4),
+      shouldUpdate: shouldUpdate
+    });
+    
+    return shouldUpdate;
   }
   
   /**
@@ -757,6 +800,12 @@
         
         // Update current version
         currentVersion = serverVersion;
+        
+        // Check progressive rollout
+        if (!shouldRollout()) {
+          log('⏸️ Update skipped due to progressive rollout');
+          return;
+        }
         
         // Call callback
         if (typeof config.onUpdateAvailable === 'function') {
