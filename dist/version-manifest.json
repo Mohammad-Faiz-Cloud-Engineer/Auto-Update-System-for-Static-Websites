@@ -1,0 +1,23 @@
+{
+  "version": "2.1.0",
+  "buildNumber": "20260320120000",
+  "timestamp": "2026-03-20T12:00:00.000Z",
+  "description": "Framework integrations, TypeScript definitions, build plugins, and progressive rollout",
+  "files": {
+    "auto-update.js": "v2.1-enhanced",
+    "examples/basic-integration.html": "49f988f3",
+    "examples/advanced-integration.html": "161a4672"
+  },
+  "changelog": [
+    "Version 2.1.0 - 3/20/2026 - Framework integrations and build tools",
+    "Version 2.1.0 - TypeScript definitions added",
+    "Version 2.1.0 - React integration example with hooks",
+    "Version 2.1.0 - Vue integration example (Options API and Composition API)",
+    "Version 2.1.0 - Angular integration example with service",
+    "Version 2.1.0 - Webpack plugin for automatic manifest generation",
+    "Version 2.1.0 - Vite plugin for automatic manifest generation",
+    "Version 2.1.0 - Progressive rollout feature (update X% of users)",
+    "Version 2.0.0 - 3/20/2026 - Production-grade security enhancements",
+    "Version 1.0.1 - 3/19/2026 - Initial release"
+  ]
+}
