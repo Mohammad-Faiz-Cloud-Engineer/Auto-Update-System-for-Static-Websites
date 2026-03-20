@@ -1,261 +1,125 @@
 # Changelog
 
-All notable changes to this project.
+## Version 2.0.0 (March 20, 2026)
 
-## [2.0.0] - 2026-03-20
+This release focuses on production readiness, security hardening, and fixing some annoying bugs that could cause issues in real-world deployments.
 
-### 🔒 Security Enhancements
+### What's Fixed
 
-- **XSS Protection**: Added comprehensive input sanitization for all user-provided content
-  - Version strings are now sanitized before DOM insertion
-  - Uses `textContent` for safe text insertion
-  - Added `sanitizeText()` function for all dynamic content
-  - Notification HTML now includes ARIA attributes for accessibility
+**Memory leaks are gone**  
+The library was adding event listeners but never cleaning them up. If you had a long-running single-page app, this would eventually cause problems. Now all listeners are tracked and properly removed when you call `destroy()`.
 
-- **Input Validation**: Enhanced manifest validation
-  - File size limits (manifest < 1MB)
-  - Content-type verification
-  - Version format validation with semantic versioning support
-  - Timeout protection (10s) with AbortController
-  - Empty response detection
+**Race conditions in update checks**  
+If multiple update checks happened at the same time (which could happen if you manually triggered a check while the automatic one was running), things got messy. Now we track the ongoing check and just return the same promise if another check is requested.
 
-- **Network Security**: Improved fetch security
-  - Enhanced cache-busting with random tokens
-  - Abort controller for request timeouts
-  - Better error handling for network failures
-  - No hardcoded HTTP URLs
+**Cache clearing was incomplete**  
+We were only clearing the Cache API and Service Workers, but localStorage and sessionStorage were left alone. Now we clear everything (except our own data in localStorage, obviously).
 
-### 🐛 Bug Fixes
+**Version comparison was broken for pre-releases**  
+If you used versions like `1.0.0-beta.1`, the comparison logic would fail. Now it properly handles semantic versioning including pre-release tags and build metadata.
 
-- **Race Condition Protection**: Fixed concurrent update checks
-  - Added `checkPromise` to track ongoing checks
-  - Returns existing promise if check already in progress
-  - Prevents multiple simultaneous manifest fetches
+### Security Improvements
 
-- **Memory Leak Prevention**: Proper cleanup of resources
-  - Event listeners are now tracked and removed on destroy
-  - Added `removeAllEventListeners()` function
-  - Proper cleanup in `destroy()` method
-  - Added `isDestroyed` flag to prevent operations after destruction
+**XSS protection**  
+Version strings from the manifest are now sanitized before being inserted into the DOM. If someone managed to inject malicious code into your manifest file, it won't execute anymore.
 
-- **Version Comparison**: Enhanced version comparison logic
-  - Full semantic versioning support (major.minor.patch-prerelease+build)
-  - Handles pre-release versions correctly
-  - Better fallback for non-semver versions
-  - Validates version format before comparison
+**Better input validation**  
+The manifest is now thoroughly validated - we check file sizes, content types, version formats, and handle timeouts properly. No more crashes from malformed data.
 
-- **Cache Clearing**: Comprehensive cache management
-  - Now clears Cache API, Service Workers, localStorage, and sessionStorage
-  - Preserves own storage keys during localStorage clear
-  - Returns detailed results object
-  - Better error handling for each cache type
+**Request timeouts**  
+Added a 10-second timeout for manifest fetches using AbortController. If your server is slow or unresponsive, the library won't hang forever.
 
-### ✨ New Features
+### New Stuff
 
-- **Enhanced Build Script**: Production-grade version management
-  - Atomic file writes with backup/restore
-  - SHA-256 hashing (upgraded from MD5)
-  - Comprehensive validation at every step
-  - File size limits and safety checks
-  - Better error messages and recovery
-  - Environment validation
+**Server configuration guide**  
+This was the big missing piece. The library handles client-side caching perfectly, but if your server or CDN is caching the manifest file, users won't get updates. I wrote a complete guide (`SERVER_CACHE_CONFIG.md`) with examples for Apache, Nginx, Node.js, Python, and all major CDNs.
 
-- **Server Configuration Guide**: Complete documentation
-  - Apache, Nginx, Node.js, Python examples
-  - CDN configuration (Cloudflare, AWS, Netlify, Vercel)
-  - Cache header best practices
-  - Testing instructions
-  - Common issues and solutions
+**Security documentation**  
+Added `SECURITY.md` with best practices, vulnerability reporting process, and even an example of how to implement manifest signing if you need that level of security.
 
-- **Security Documentation**: Comprehensive security guide
-  - Security features overview
-  - Best practices for developers
-  - Vulnerability reporting process
-  - Advanced features (manifest signing)
-  - Compliance information (GDPR, CCPA)
-  - Security checklist
+**Better build script**  
+The version bumping script now uses atomic writes (so you won't corrupt your manifest if something goes wrong), switched from MD5 to SHA-256 for file hashing, and validates everything before writing.
 
-### 📚 Documentation
+### Technical Details
 
-- Added `SERVER_CACHE_CONFIG.md` - Complete server-side cache configuration guide
-- Added `SECURITY.md` - Comprehensive security documentation
-- Updated `README.md` with critical server-side cache information
-- Enhanced `CHANGELOG.md` with detailed version history
-- Improved inline code documentation
+The library version is now `2.0.0` (was `1.0.0`). All 45 automated tests still pass. No breaking changes - your existing code will work without modifications.
 
-### 🔧 Technical Improvements
+Performance is slightly better due to promise caching and more efficient cache clearing. Memory usage is lower thanks to proper cleanup.
 
-- Upgraded library version to 2.0.0
-- Enhanced error messages throughout
-- Better TypeScript compatibility (JSDoc comments)
-- Improved code organization and readability
-- Added comprehensive validation everywhere
-- Better handling of edge cases
+### What You Should Do
 
-### ⚠️ Breaking Changes
+If you're upgrading from 1.x:
 
-None - Fully backward compatible with 1.x configuration
+1. Replace `auto-update.js` with the new version
+2. **Important**: Configure your server to never cache `version-manifest.json` (see `SERVER_CACHE_CONFIG.md`)
+3. Test in staging
+4. Deploy
 
-### 🎯 Performance
-
-- Reduced redundant checks with promise caching
-- More efficient cache clearing
-- Better memory management
-- Optimized event listener handling
-
-### 🧪 Testing
-
-- All 45 automated tests passing
-- Enhanced test coverage
-- Better error scenarios covered
-- Security tests added
+That's it. Your existing configuration will work as-is.
 
 ---
 
-## [1.0.1] - 2026-03-19
+## Version 1.0.1 (March 19, 2026)
 
-### Features
+Initial public release. This is the version that was working but had the issues fixed in 2.0.0.
 
-- Initial public release
-- Automatic update detection with configurable check intervals
-- Smart cache management (online = fresh data, offline = cached)
-- Beautiful update notifications with smooth animations
-- Force update mode for critical fixes
-- Manual update check functionality
-- Version comparison with semantic versioning
-- Comprehensive error handling and retry logic
-- Debug mode for development
-- Enable/disable toggle
-- Callback hooks for custom behavior
-- Cross-browser compatibility
-- Zero dependencies
-- Lightweight (<10KB)
-- Security best practices (no eval, XSS protection)
-- Mobile-responsive design
-- Dark mode support
-- Offline support
-
-### Documentation
-
-- Complete README with examples
-- Integration guide with troubleshooting
-- Automated test suite (45 tests)
-- Example implementations
-- Build script for version management
-
-### Browser Support
-
-- Chrome/Edge: Full support
-- Firefox: Full support
-- Safari: Full support
-- Opera: Full support
-- IE11: Partial support (no Service Worker)
+Features:
+- Automatic update detection every 30 seconds (configurable)
+- Clears browser caches when updates are found
+- Shows a nice notification or auto-reloads the page
+- Works offline (serves cached content)
+- Retry logic for failed checks
+- Debug mode
+- Callbacks for custom behavior
+- Works in all modern browsers (partial support for IE11)
 
 ---
 
-## [1.0.0] - 2026-03-19
+## Version 1.0.0 (March 19, 2026)
 
-Initial development release (not published)
+Internal development version, never released publicly.
 
 ---
 
-## Migration Guide
+## Upgrading from 1.x to 2.0
 
-### From 1.x to 2.0
+Good news: no code changes needed. Just swap the files and you're done.
 
-No code changes required! Version 2.0 is fully backward compatible.
+The only thing you *should* do (but technically don't have to) is configure your server to send proper cache headers for the manifest file:
 
-However, we **strongly recommend** adding server-side cache headers:
-
-1. Read `SERVER_CACHE_CONFIG.md`
-2. Configure your server to never cache `version-manifest.json`
-3. Add appropriate cache headers for HTML/CSS/JS files
-4. Test with browser DevTools Network tab
-
-### Recommended Configuration Update
-
-```javascript
-// Old (still works)
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  checkInterval: 30000
-});
-
-// New (recommended - same functionality, just explicit)
-AutoUpdate.init({
-  manifestUrl: '/version-manifest.json',
-  checkInterval: 30000,
-  forceUpdate: true,
-  showNotification: true,
-  debug: false,
-  retryAttempts: 3,
-  retryDelay: 5000
-});
+```
+Cache-Control: no-cache, no-store, must-revalidate, max-age=0
 ```
 
----
-
-## Upgrade Instructions
-
-### For Users
-
-1. Download new `auto-update.js` (v2.0.0)
-2. Replace old file
-3. No configuration changes needed
-4. Deploy to server
-
-### For Developers
-
-1. Update `auto-update.js` to v2.0.0
-2. Update `build-version.js` to v2.0.0
-3. Read `SERVER_CACHE_CONFIG.md` and configure server
-4. Read `SECURITY.md` for security best practices
-5. Test in staging environment
-6. Deploy to production
+Without this, browsers and CDNs might cache the manifest, and users won't get updates immediately. See `SERVER_CACHE_CONFIG.md` for details.
 
 ---
 
-## Deprecation Notices
+## What's Next
 
-None - All 1.x features are supported
-
----
-
-## Known Issues
-
-None currently
-
----
-
-## Roadmap
-
-### v2.1.0 (Planned)
+**Version 2.1** (planned for Q2 2026):
 - TypeScript definitions
-- React/Vue/Angular integration examples
-- Webpack/Vite plugins
-- Progressive rollout support
-- A/B testing integration
+- Framework integration examples (React, Vue, Angular)
+- Webpack and Vite plugins
+- Progressive rollout (update only X% of users)
 
-### v2.2.0 (Planned)
-- Service Worker integration
+**Version 2.2** (planned for Q3 2026):
+- Better Service Worker integration
 - Background sync support
 - Offline-first mode
-- Delta updates (partial updates)
+- Delta updates (only download what changed)
 
-### v3.0.0 (Future)
-- Breaking changes TBD
-- Modern browser only (drop IE11)
+**Version 3.0** (someday):
+- Drop IE11 support
 - Native ES modules
-- Web Components support
+- Modern browser features only
 
 ---
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
----
+Found a bug? Have an idea? Open an issue or submit a PR. See CONTRIBUTING.md for guidelines.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+MIT - do whatever you want with it.
