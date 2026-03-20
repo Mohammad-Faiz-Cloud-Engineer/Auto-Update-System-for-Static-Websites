@@ -1,5 +1,64 @@
 # Changelog
 
+## Version 2.1.0 (March 20, 2026)
+
+This release adds framework integrations, TypeScript support, build tool plugins, and progressive rollout capabilities.
+
+### New Features
+
+**TypeScript Definitions**  
+Added complete TypeScript definitions (`auto-update.d.ts`) with full type safety for all configuration options, callbacks, and methods. Works with TypeScript, VS Code IntelliSense, and other editors.
+
+**Framework Integrations**  
+Created ready-to-use integration examples:
+
+- React: Custom hook (`useAutoUpdate`) with full React lifecycle support
+- Vue: Component with Options API and Composition API examples
+- Angular: Service with RxJS observables and dependency injection
+
+All examples include update notifications, version display, and manual check triggers.
+
+**Build Tool Plugins**  
+Automatic manifest generation during build:
+
+- Webpack plugin: Generates manifest with file hashes automatically
+- Vite plugin: Same functionality for Vite projects
+
+No more manual version bumping - the plugins handle it during your build process.
+
+**Progressive Rollout**  
+New `rolloutPercentage` option lets you update only a percentage of users:
+
+```javascript
+AutoUpdate.init({
+  manifestUrl: '/version-manifest.json',
+  rolloutPercentage: 0.1  // Update 10% of users
+});
+```
+
+Each user gets a stable ID, so they consistently either get or don't get the update. Perfect for testing new versions with a subset of users before full rollout.
+
+### How It Works
+
+The progressive rollout uses a hash of a randomly generated user ID stored in localStorage. If the hash is less than your rollout percentage, that user gets the update. The ID persists across sessions, so users don't randomly switch between getting and not getting updates.
+
+### Examples
+
+All new examples are in the `examples/` folder:
+- `react-integration.jsx` - React hooks and components
+- `vue-integration.vue` - Vue 2/3 compatible
+- `angular-integration.ts` - Angular service and components
+
+Plugins are in the `plugins/` folder:
+- `webpack-plugin.js` - Webpack integration
+- `vite-plugin.js` - Vite integration
+
+### Breaking Changes
+
+None. All v2.0 code works without changes.
+
+---
+
 ## Version 2.0.0 (March 20, 2026)
 
 This release focuses on production readiness, security hardening, and fixing some annoying bugs that could cause issues in real-world deployments.
