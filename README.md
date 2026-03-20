@@ -252,23 +252,69 @@ Runs 45 tests covering file structure, code quality, security, and functionality
 ## How It Works
 
 1. **Initialization**: When your page loads, the script stores the current version in localStorage
-2. **Periodic Checks**: Every 30 seconds (configurable), it fetches `version-manifest.json` from your server
-3. **Version Comparison**: Compares server version with stored version
-4. **Cache Clearing**: If different, clears all browser caches (Cache API, Service Worker)
+2. **Periodic Checks**: Every 30 seconds (configurable), it fetches `version-manifest.json` from your server with cache-busting headers
+3. **Version Comparison**: Compares server version with stored version using semantic versioning
+4. **Cache Clearing**: If different, clears all browser caches (Cache API, Service Worker, localStorage, sessionStorage)
 5. **Update**: Reloads the page with cache bypass, forcing fresh content download
 
 The manifest is fetched with cache-busting query parameters and no-cache headers to ensure you always get the latest version number.
 
+## ⚠️ Critical: Server-Side Cache Configuration Required
+
+This library handles **client-side** cache clearing perfectly. However, to guarantee 100% fresh assets from the server, you **MUST** configure proper server-side cache headers.
+
+### Quick Server Setup
+
+Add these headers to your server configuration:
+
+**For version-manifest.json (NEVER cache):**
+```
+Cache-Control: no-cache, no-store, must-revalidate, max-age=0
+Pragma: no-cache
+Expires: 0
+```
+
+**For HTML files (short cache):**
+```
+Cache-Control: public, max-age=300, must-revalidate
+```
+
+**For CSS/JS files (long cache with versioning):**
+```
+Cache-Control: public, max-age=31536000, immutable
+```
+
+Use versioned URLs like `app.js?v=1.0.1` or `app.v1.0.1.js` for assets.
+
+📖 **See [SERVER_CACHE_CONFIG.md](SERVER_CACHE_CONFIG.md) for complete configuration examples for Apache, Nginx, Node.js, CDNs, and more.**
+
+Without proper server headers, browsers and CDNs may serve stale content even after client cache is cleared.
+
 ## Browser Support
 
-| Browser | Support |
-|---------|---------|
-| Chrome  | ✅ Full |
-| Firefox | ✅ Full |
-| Safari  | ✅ Full |
-| Edge    | ✅ Full |
-| Opera   | ✅ Full |
-| IE11    | ⚠️ Partial (no Service Worker) |
+| Browser | Support | Notes |
+|---------|---------|-------|
+| Chrome  | ✅ Full | All features supported |
+| Firefox | ✅ Full | All features supported |
+| Safari  | ✅ Full | All features supported |
+| Edge    | ✅ Full | All features supported |
+| Opera   | ✅ Full | All features supported |
+| IE11    | ⚠️ Partial | No Service Worker support |
+
+## Security
+
+- No `eval()` or dynamic code execution
+- XSS protection with input sanitization
+- All user inputs are validated and sanitized
+- Works with Content Security Policy (CSP)
+- HTTPS recommended for production
+- No external dependencies (no supply chain attacks)
+- SHA-256 file integrity hashing
+- Timeout protection for network requests
+- Race condition protection
+- Memory leak prevention
+
+📖 **See [SECURITY.md](SECURITY.md) for complete security documentation, best practices, and advanced features like manifest signing.**
 
 ## Troubleshooting
 
