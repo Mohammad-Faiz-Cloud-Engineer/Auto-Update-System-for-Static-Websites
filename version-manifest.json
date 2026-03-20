@@ -1,16 +1,23 @@
 {
-  "version": "1.0.1",
-  "buildNumber": "20260319154636",
-  "timestamp": "2026-03-19T10:16:36.455Z",
-  "description": "Initial release",
+  "version": "2.0.0",
+  "buildNumber": "20260320000001",
+  "timestamp": "2026-03-20T00:00:01.000Z",
+  "description": "Production-grade release with enhanced security, comprehensive cache clearing, and server-side configuration",
   "files": {
-    "auto-update.js": "50c66559",
+    "auto-update.js": "enhanced-v2",
     "examples/basic-integration.html": "49f988f3",
     "examples/advanced-integration.html": "161a4672"
   },
   "changelog": [
-    "Version 1.0.1 - 3/19/2026",
-    "Initial release",
-    "Core functionality implemented"
+    "Version 2.0.0 - 3/20/2026 - Production-grade security enhancements",
+    "Version 2.0.0 - Enhanced XSS protection with input sanitization",
+    "Version 2.0.0 - Race condition protection for concurrent checks",
+    "Version 2.0.0 - Comprehensive cache clearing (all storage types)",
+    "Version 2.0.0 - Memory leak prevention with event listener cleanup",
+    "Version 2.0.0 - Enhanced version comparison with semver support",
+    "Version 2.0.0 - Timeout protection and abort controller",
+    "Version 2.0.0 - Server-side cache configuration guide added",
+    "Version 2.0.0 - Security documentation and best practices",
+    "Version 2.0.0 - Build script with atomic writes and validation"
   ]
 }
