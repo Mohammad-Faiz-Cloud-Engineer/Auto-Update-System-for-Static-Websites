@@ -1,14 +1,24 @@
 {
   "name": "auto-update-system",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Production-grade auto-update system for static HTML/CSS/JS websites",
-  "main": "auto-update.js",
+  "main": "dist/auto-update.js",
+  "types": "types/auto-update.d.ts",
+  "files": [
+    "dist/",
+    "types/",
+    "integrations/",
+    "plugins/",
+    "examples/"
+  ],
   "scripts": {
     "test": "node test/run-tests.js",
-    "test:integration": "node test/integration-test.js",
-    "build": "node build-version.js patch",
-    "build:minor": "node build-version.js minor",
-    "build:major": "node build-version.js major",
+    "test:security": "node test/security-tests.js",
+    "test:all": "npm run test && npm run test:security",
+    "build": "node src/build-version.js patch",
+    "build:minor": "node src/build-version.js minor",
+    "build:major": "node src/build-version.js major",
+    "dist": "cp src/auto-update.js dist/ && cp types/auto-update.d.ts dist/",
     "serve": "npx http-server -p 8080 -c-1",
     "dev": "npx http-server -p 8080 -c-1 --open test/index.html"
   },
@@ -20,7 +30,13 @@
     "static-site",
     "pwa",
     "service-worker",
-    "update-notification"
+    "update-notification",
+    "react",
+    "vue",
+    "angular",
+    "webpack",
+    "vite",
+    "typescript"
   ],
   "author": "Mohammad Faiz",
   "license": "MIT",
