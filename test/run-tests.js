@@ -98,7 +98,7 @@ function printSummary() {
 printHeader('File Structure Tests');
 
 test('auto-update.js exists', () => {
-  return fs.existsSync(path.join(__dirname, '../auto-update.js'));
+  return fs.existsSync(path.join(__dirname, '../src/auto-update.js'));
 });
 
 test('version-manifest.json exists', () => {
@@ -110,7 +110,7 @@ test('README.md exists', () => {
 });
 
 test('INTEGRATION_GUIDE.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../INTEGRATION_GUIDE.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/guides/INTEGRATION_GUIDE.md'));
 });
 
 test('LICENSE exists', () => {
@@ -122,7 +122,7 @@ test('package.json exists', () => {
 });
 
 test('build-version.js exists', () => {
-  return fs.existsSync(path.join(__dirname, '../build-version.js'));
+  return fs.existsSync(path.join(__dirname, '../src/build-version.js'));
 });
 
 test('test/index.html exists', () => {
@@ -145,7 +145,7 @@ printHeader('Code Quality Tests');
 
 test('auto-update.js is valid JavaScript', () => {
   try {
-    const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+    const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
     // Basic syntax check
     new Function(code);
     return true;
@@ -155,32 +155,32 @@ test('auto-update.js is valid JavaScript', () => {
 });
 
 test('auto-update.js contains AutoUpdate object', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('window.AutoUpdate');
 });
 
 test('auto-update.js contains init function', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('function init(');
 });
 
 test('auto-update.js contains checkForUpdates function', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('function checkForUpdates(');
 });
 
 test('auto-update.js contains clearAllCaches function', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('function clearAllCaches(');
 });
 
 test('auto-update.js has proper error handling', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('try {') && code.includes('catch (error)');
 });
 
 test('auto-update.js has version constant', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return code.includes('LIBRARY_VERSION');
 });
 
@@ -259,12 +259,12 @@ test('README.md has configuration section', () => {
 });
 
 test('INTEGRATION_GUIDE.md has step-by-step instructions', () => {
-  const guide = fs.readFileSync(path.join(__dirname, '../INTEGRATION_GUIDE.md'), 'utf8');
+  const guide = fs.readFileSync(path.join(__dirname, '../docs/guides/INTEGRATION_GUIDE.md'), 'utf8');
   return guide.includes('Step 1') || guide.includes('step 1');
 });
 
 test('INTEGRATION_GUIDE.md has troubleshooting section', () => {
-  const guide = fs.readFileSync(path.join(__dirname, '../INTEGRATION_GUIDE.md'), 'utf8');
+  const guide = fs.readFileSync(path.join(__dirname, '../docs/guides/INTEGRATION_GUIDE.md'), 'utf8');
   return guide.includes('Troubleshooting') || guide.includes('troubleshooting');
 });
 
@@ -358,7 +358,7 @@ printHeader('Build Script Tests');
 
 test('build-version.js is valid JavaScript', () => {
   try {
-    const code = fs.readFileSync(path.join(__dirname, '../build-version.js'), 'utf8');
+    const code = fs.readFileSync(path.join(__dirname, '../src/build-version.js'), 'utf8');
     // Basic syntax check (don't execute)
     return code.includes('function') && code.includes('manifest');
   } catch (error) {
@@ -367,12 +367,12 @@ test('build-version.js is valid JavaScript', () => {
 });
 
 test('build-version.js has version bump logic', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../build-version.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/build-version.js'), 'utf8');
   return code.includes('bumpVersion') || code.includes('bump');
 });
 
 test('build-version.js has file hash calculation', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../build-version.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/build-version.js'), 'utf8');
   return code.includes('hash') || code.includes('Hash');
 });
 
@@ -383,18 +383,18 @@ test('build-version.js has file hash calculation', () => {
 printHeader('Security Tests');
 
 test('auto-update.js does not use eval()', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   return !code.includes('eval(');
 });
 
 test('auto-update.js sanitizes HTML', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   // Check for basic XSS protection
   return code.includes('textContent') || code.includes('sanitize');
 });
 
 test('auto-update.js uses HTTPS for fetch', () => {
-  const code = fs.readFileSync(path.join(__dirname, '../auto-update.js'), 'utf8');
+  const code = fs.readFileSync(path.join(__dirname, '../src/auto-update.js'), 'utf8');
   // Should not have hardcoded HTTP URLs
   return !code.includes('http://');
 });

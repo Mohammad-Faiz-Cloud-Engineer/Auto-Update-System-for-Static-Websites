@@ -59,13 +59,13 @@ function header(title) {
 
 // Read auto-update.js
 const autoUpdateCode = fs.readFileSync(
-  path.join(__dirname, '../auto-update.js'),
+  path.join(__dirname, '../src/auto-update.js'),
   'utf8'
 );
 
 // Read build-version.js
 const buildVersionCode = fs.readFileSync(
-  path.join(__dirname, '../build-version.js'),
+  path.join(__dirname, '../src/build-version.js'),
   'utf8'
 );
 
@@ -299,8 +299,8 @@ test('Build Script: Semantic version validation', () => {
 
 header('Code Quality Tests');
 
-test('Library version updated to 2.0.0', () => {
-  return autoUpdateCode.includes("LIBRARY_VERSION = '2.0.0'");
+test('Library version updated to 2.1.0', () => {
+  return autoUpdateCode.includes("LIBRARY_VERSION = '2.1.0'");
 });
 
 test('Proper error messages throughout', () => {
@@ -334,23 +334,23 @@ test('Proper JSDoc comments', () => {
 header('Documentation Tests');
 
 test('SERVER_CACHE_CONFIG.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../SERVER_CACHE_CONFIG.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/guides/SERVER_CACHE_CONFIG.md'));
 });
 
 test('SECURITY.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../SECURITY.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/SECURITY.md'));
 });
 
 test('CONTRIBUTING.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../CONTRIBUTING.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/CONTRIBUTING.md'));
 });
 
 test('FIXES_SUMMARY.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../FIXES_SUMMARY.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/FIXES_SUMMARY.md'));
 });
 
 test('UPGRADE_TO_V2.md exists', () => {
-  return fs.existsSync(path.join(__dirname, '../UPGRADE_TO_V2.md'));
+  return fs.existsSync(path.join(__dirname, '../docs/UPGRADE_TO_V2.md'));
 });
 
 test('README mentions server-side cache configuration', () => {
@@ -397,9 +397,9 @@ test('Test page still functional', () => {
 test('Version manifest is valid JSON', () => {
   try {
     const manifest = JSON.parse(
-      fs.readFileSync(path.join(__dirname, '../version-manifest.json'), 'utf8')
+      fs.readFileSync(path.join(__dirname, '../dist/version-manifest.json'), 'utf8')
     );
-    return manifest.version === '2.0.0';
+    return manifest.version === '2.1.0';
   } catch (e) {
     return false;
   }
