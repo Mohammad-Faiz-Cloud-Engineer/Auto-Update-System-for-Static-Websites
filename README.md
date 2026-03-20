@@ -1,48 +1,26 @@
 # Auto-Update System for Static Websites
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Mohammad-Faiz-Cloud-Engineer/Auto-Update-System-for-Static-Websites)
+Ever deployed a fix to your website, only to have users complain it's still broken? They're seeing the old cached version. This library fixes that problem.
 
-Ever deployed a website update only to have users still see the old cached version? This solves that problem.
+It automatically detects when you've deployed new code and forces browsers to download the latest version. No more "have you tried clearing your cache?" support tickets.
 
-This is a lightweight JavaScript library that automatically detects when you've deployed new code and forces browsers to download the latest version. No more "clear your cache" support tickets.
+## The Problem
 
-## Why This Exists
+You push an update. Your server has the new files. But users are still seeing the old version because their browser cached everything. You tell them to hard refresh (Ctrl+F5), but half of them don't know what that means.
 
-Browser caching is great for performance but terrible when you need users to see your latest changes. Traditional solutions like cache-busting URLs or service workers are complex to implement. This library gives you automatic updates with just two files and five lines of code.
+Sound familiar?
 
-## What It Does
+## The Solution
 
-- Checks your server every 30 seconds for a new version
-- When found, clears all browser caches automatically
-- Shows users a clean notification (or force-reloads the page)
-- Works offline - serves cached content when there's no connection
-- Zero dependencies, works with any static site
+This library checks your server every 30 seconds for a new version. When it finds one, it clears all the browser caches and reloads the page. Users get the update automatically. Done.
 
 ## Quick Start
 
-### 1. Download Files
+Download two files:
+- `auto-update.js` - the library
+- `version-manifest.json` - tracks your version
 
-Grab these two files from this repo:
-- `auto-update.js` - The main library (20KB)
-- `version-manifest.json` - Tracks your version number
-
-### 2. Add to Your Project
-
-Put both files in your website's root folder:
-
-```
-your-website/
-├── index.html
-├── css/
-├── js/
-├── auto-update.js          ← Add this
-└── version-manifest.json   ← Add this
-```
-
-### 3. Add Script to HTML
-
-Open your HTML file and add this before the closing `</body>` tag:
+Put them in your website's root folder and add this to your HTML:
 
 ```html
 <script src="auto-update.js"></script>
@@ -53,9 +31,7 @@ Open your HTML file and add this before the closing `</body>` tag:
 </script>
 ```
 
-### 4. Set Your Version
-
-Edit `version-manifest.json`:
+Set your version in `version-manifest.json`:
 
 ```json
 {
@@ -65,29 +41,19 @@ Edit `version-manifest.json`:
 }
 ```
 
-That's it. Upload everything to your server and you're done.
+Upload everything. You're done.
 
-## How to Deploy Updates
+## Deploying Updates
 
-When you make changes to your website:
+When you make changes:
 
-1. **Edit your files** (HTML, CSS, JS, whatever)
+1. Edit your files
+2. Change the version in `version-manifest.json` (1.0.0 → 1.0.1)
+3. Upload to your server
 
-2. **Bump the version** in `version-manifest.json`:
-   ```json
-   {
-     "version": "1.0.1",  ← Change this
-     "timestamp": "2026-03-19T11:00:00Z"
-   }
-   ```
+Users automatically get the update within 30 seconds.
 
-3. **Upload to your server**
-
-Users will automatically get the update within 30 seconds. No manual cache clearing needed.
-
-### Automated Version Bumping
-
-If you have Node.js installed, use the included script:
+If you have Node.js, there's a script to bump versions automatically:
 
 ```bash
 node build-version.js patch  # 1.0.0 → 1.0.1
@@ -95,62 +61,52 @@ node build-version.js minor  # 1.0.0 → 1.1.0
 node build-version.js major  # 1.0.0 → 2.0.0
 ```
 
-This updates the version, generates a build number, and calculates file hashes automatically.
-
 ## Configuration
 
-### Basic Setup
+Basic setup:
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
-  checkInterval: 30000,  // Check every 30 seconds
-  forceUpdate: true      // Auto-reload when update found
+  checkInterval: 30000,  // check every 30 seconds
+  forceUpdate: true      // auto-reload when update found
 });
 ```
-
-### Show Notification Instead
 
 Let users decide when to update:
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
-  forceUpdate: false,        // Don't auto-reload
-  showNotification: true     // Show update prompt
+  forceUpdate: false,        // don't auto-reload
+  showNotification: true     // show a notification instead
 });
 ```
 
-### Development Mode
-
-More frequent checks and debug logging:
+Development mode (more frequent checks, debug logs):
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
-  checkInterval: 10000,  // Check every 10 seconds
+  checkInterval: 10000,
   forceUpdate: false,
-  debug: true            // See console logs
+  debug: true
 });
 ```
 
-### All Options
+All available options:
 
 ```javascript
 AutoUpdate.init({
-  // Required
   manifestUrl: '/version-manifest.json',
-  
-  // Optional
-  checkInterval: 30000,              // How often to check (ms)
-  forceUpdate: true,                 // Auto-reload on update
-  showNotification: true,            // Show update notification
-  debug: false,                      // Console logging
+  checkInterval: 30000,
+  forceUpdate: true,
+  showNotification: true,
+  debug: false,
   notificationMessage: 'New version available!',
-  retryAttempts: 3,                  // Retry failed checks
-  retryDelay: 5000,                  // Delay between retries
+  retryAttempts: 3,
+  retryDelay: 5000,
   
-  // Callbacks
   onUpdateAvailable: (newVersion, oldVersion) => {
     console.log(`Update: ${oldVersion} → ${newVersion}`);
   },
@@ -165,273 +121,167 @@ AutoUpdate.init({
 });
 ```
 
-## Real-World Examples
+## Real Examples
 
-### Example 1: E-commerce Site
-
-You fix a critical checkout bug. Deploy the fix, bump the version, and all users get it within 30 seconds. No support tickets about "the checkout still doesn't work."
+**E-commerce site with a critical bug fix:**
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
-  forceUpdate: true  // Critical fix, force reload
+  forceUpdate: true  // force reload immediately
 });
 ```
 
-### Example 2: Documentation Site
+Deploy the fix, bump the version, and all users get it within 30 seconds.
 
-You update docs frequently. Let users finish reading before updating:
+**Documentation site:**
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
-  forceUpdate: false,
-  notificationMessage: 'New documentation available. Update when ready.'
+  forceUpdate: false,  // let users finish reading
+  notificationMessage: 'New docs available. Update when ready.'
 });
 ```
 
-### Example 3: With Analytics
-
-Track how many users are updating:
+**With analytics:**
 
 ```javascript
 AutoUpdate.init({
   manifestUrl: '/version-manifest.json',
   onUpdateAvailable: (newVersion, oldVersion) => {
-    // Send to Google Analytics
     gtag('event', 'update_available', {
       old_version: oldVersion,
       new_version: newVersion
     });
-  },
-  onUpdateComplete: (version) => {
-    gtag('event', 'update_completed', { version });
   }
 });
 ```
 
 ## Testing
 
-### Test Update Detection
+Open your site in a browser. Open the console (F12). Edit `version-manifest.json` on your server and change the version. Wait 30 seconds. You'll see the update notification or the page will reload.
 
-1. Open your website in a browser
-2. Open browser console (F12)
-3. Edit `version-manifest.json` on your server - change version to `1.0.1`
-4. Wait 30 seconds
-5. You'll see the update notification or page will reload
-
-### Manual Check
-
-Add a button to test manually:
+Or add a button to test manually:
 
 ```html
 <button onclick="AutoUpdate.checkNow()">Check for Updates</button>
 ```
 
-### Show Current Version
-
-Display version on your page:
+Show the current version on your page:
 
 ```html
 <div id="version"></div>
-
 <script>
   document.getElementById('version').textContent = 
     'Version: ' + AutoUpdate.getVersion();
 </script>
 ```
 
-### Run Automated Tests
+Run the automated test suite:
 
 ```bash
 npm test
 ```
 
-Runs 45 tests covering file structure, code quality, security, and functionality.
-
 ## How It Works
 
-1. **Initialization**: When your page loads, the script stores the current version in localStorage
-2. **Periodic Checks**: Every 30 seconds (configurable), it fetches `version-manifest.json` from your server with cache-busting headers
-3. **Version Comparison**: Compares server version with stored version using semantic versioning
-4. **Cache Clearing**: If different, clears all browser caches (Cache API, Service Worker, localStorage, sessionStorage)
-5. **Update**: Reloads the page with cache bypass, forcing fresh content download
+When your page loads, the script stores the current version in localStorage. Every 30 seconds, it fetches `version-manifest.json` from your server (with cache-busting headers so it always gets the latest). If the version changed, it clears all browser caches (Cache API, Service Workers, localStorage, sessionStorage) and reloads the page.
 
-The manifest is fetched with cache-busting query parameters and no-cache headers to ensure you always get the latest version number.
+## Important: Server Configuration
 
-## ⚠️ Critical: Server-Side Cache Configuration Required
+The library handles client-side caching perfectly. But if your server or CDN is caching the manifest file, users won't get updates.
 
-This library handles **client-side** cache clearing perfectly. However, to guarantee 100% fresh assets from the server, you **MUST** configure proper server-side cache headers.
+You need to configure your server to never cache `version-manifest.json`:
 
-### Quick Server Setup
-
-Add these headers to your server configuration:
-
-**For version-manifest.json (NEVER cache):**
 ```
 Cache-Control: no-cache, no-store, must-revalidate, max-age=0
 Pragma: no-cache
 Expires: 0
 ```
 
-**For HTML files (short cache):**
+For HTML files, use a short cache:
+
 ```
 Cache-Control: public, max-age=300, must-revalidate
 ```
 
-**For CSS/JS files (long cache with versioning):**
+For CSS/JS files, use a long cache with versioned URLs:
+
 ```
 Cache-Control: public, max-age=31536000, immutable
 ```
 
-Use versioned URLs like `app.js?v=1.0.1` or `app.v1.0.1.js` for assets.
+Then use URLs like `app.js?v=1.0.1` or `app.v1.0.1.js`.
 
-📖 **See [SERVER_CACHE_CONFIG.md](SERVER_CACHE_CONFIG.md) for complete configuration examples for Apache, Nginx, Node.js, CDNs, and more.**
-
-Without proper server headers, browsers and CDNs may serve stale content even after client cache is cleared.
+See `SERVER_CACHE_CONFIG.md` for complete examples for Apache, Nginx, Node.js, Python, and all major CDNs (Cloudflare, AWS, Netlify, Vercel).
 
 ## Browser Support
 
-| Browser | Support | Notes |
-|---------|---------|-------|
-| Chrome  | ✅ Full | All features supported |
-| Firefox | ✅ Full | All features supported |
-| Safari  | ✅ Full | All features supported |
-| Edge    | ✅ Full | All features supported |
-| Opera   | ✅ Full | All features supported |
-| IE11    | ⚠️ Partial | No Service Worker support |
-
-## Security
-
-- No `eval()` or dynamic code execution
-- XSS protection with input sanitization
-- All user inputs are validated and sanitized
-- Works with Content Security Policy (CSP)
-- HTTPS recommended for production
-- No external dependencies (no supply chain attacks)
-- SHA-256 file integrity hashing
-- Timeout protection for network requests
-- Race condition protection
-- Memory leak prevention
-
-📖 **See [SECURITY.md](SECURITY.md) for complete security documentation, best practices, and advanced features like manifest signing.**
+Works in all modern browsers. Partial support for IE11 (no Service Worker).
 
 ## Troubleshooting
 
-### Updates Not Detected
-
-**Problem**: Changed version but nothing happens
-
-**Solutions**:
-- Check browser console for errors
-- Verify `manifestUrl` path is correct
-- Make sure version number actually changed
+**Updates not detected?**
+- Check the browser console for errors
+- Make sure the `manifestUrl` path is correct
+- Verify the version number actually changed
 - Enable debug mode: `debug: true`
 
-### Notification Not Showing
-
-**Problem**: Update detected but no notification appears
-
-**Solutions**:
+**Notification not showing?**
 - Set `forceUpdate: false` and `showNotification: true`
 - Check for CSS conflicts (notification uses z-index: 999999)
-- Look for JavaScript errors in console
 
-### Page Reloads Constantly
-
-**Problem**: Page keeps reloading in a loop
-
-**Solutions**:
-- Check version format is correct: `"1.0.0"` not `"1.0"`
+**Page reloading constantly?**
+- Check version format: `"1.0.0"` not `"1.0"`
 - Clear localStorage: `localStorage.clear()` in console
-- Verify manifest file is valid JSON
 
-### Works Locally But Not on Server
-
-**Problem**: Everything works on localhost but fails in production
-
-**Solutions**:
-- Use absolute paths: `/version-manifest.json` not `../version-manifest.json`
-- Ensure HTTPS is enabled (required for Service Workers)
-- Check server CORS settings if manifest is on different domain
-- Verify JSON file has correct MIME type (application/json)
+**Works locally but not on server?**
+- Use absolute paths: `/version-manifest.json`
+- Make sure HTTPS is enabled (required for Service Workers)
+- Check server CORS settings if manifest is on a different domain
 
 ## Advanced Usage
 
-### Disable Auto-Update Temporarily
-
 ```javascript
-AutoUpdate.disable();  // Stop checking
-AutoUpdate.enable();   // Resume checking
-```
-
-### Check If Enabled
-
-```javascript
-if (AutoUpdate.isEnabled()) {
-  console.log('Auto-update is active');
-}
-```
-
-### Get Current Version
-
-```javascript
-const version = AutoUpdate.getVersion();
-console.log('Running version:', version);
-```
-
-### Manual Update
-
-```javascript
-AutoUpdate.checkNow();      // Check for updates now
-AutoUpdate.applyUpdate();   // Force update immediately
+AutoUpdate.disable();   // stop checking
+AutoUpdate.enable();    // resume checking
+AutoUpdate.checkNow();  // check immediately
+AutoUpdate.getVersion(); // get current version
+AutoUpdate.isEnabled(); // check if enabled
 ```
 
 ## Security
 
-- No `eval()` or dynamic code execution
-- All user inputs are sanitized
-- XSS protection built-in
-- Works with Content Security Policy (CSP)
-- HTTPS recommended for production
-- No external dependencies (no supply chain attacks)
+No `eval()` or dynamic code execution. All inputs are validated and sanitized. Works with Content Security Policy. HTTPS recommended. No external dependencies. SHA-256 file hashing. Timeout protection. Race condition protection. Memory leak prevention.
+
+See `SECURITY.md` for details and advanced features like manifest signing.
 
 ## Performance
 
-- Library size: <10KB unminified
-- Network overhead: ~1KB per check (manifest only)
-- Memory usage: <1MB
-- CPU usage: Negligible
-- No impact on page load time
+Library size: <10KB. Network overhead: ~1KB per check. Memory usage: <1MB. No impact on page load time.
 
-## Integration with Build Tools
+## Build Tool Integration
 
-### GitHub Actions
+**GitHub Actions:**
 
 ```yaml
 name: Deploy
 on:
   push:
     branches: [main]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
       - name: Bump version
         run: node build-version.js patch
-      
       - name: Deploy
-        run: |
-          # Your deployment command
-          rsync -avz ./ user@server:/var/www/html/
+        run: rsync -avz ./ user@server:/var/www/html/
 ```
 
-### With Webpack/Vite
-
-Add to your build script:
+**Webpack/Vite:**
 
 ```json
 {
@@ -443,48 +293,38 @@ Add to your build script:
 
 ## FAQ
 
-**Q: Do I need Node.js?**  
-A: No. The library is pure JavaScript. Node.js is only needed for the optional build script.
+**Do I need Node.js?**  
+No. The library is pure JavaScript. Node.js is only for the optional build script.
 
-**Q: Does it work with WordPress/Joomla/etc?**  
-A: Yes. Works with any website that serves HTML. Just add the script to your theme.
+**Does it work with WordPress/Joomla?**  
+Yes. Works with any website. Just add the script to your theme.
 
-**Q: Will it work offline?**  
-A: Yes. When offline, it serves cached content. When back online, it checks for updates.
+**Will it work offline?**  
+Yes. When offline, it serves cached content. When back online, it checks for updates.
 
-**Q: Can I customize the notification?**  
-A: Yes. Set `showNotification: false` and use the `onUpdateAvailable` callback to show your own UI.
+**Can I customize the notification?**  
+Yes. Set `showNotification: false` and use the `onUpdateAvailable` callback.
 
-**Q: Does it work on mobile?**  
-A: Yes. Fully responsive and mobile-friendly.
+**Is it free?**  
+Yes. MIT License.
 
-**Q: Is it free?**  
-A: Yes. MIT License - free for personal and commercial use.
-
-**Q: How big is it?**  
-A: Less than 10KB unminified. Very lightweight.
-
-**Q: Can I use it with a CDN?**  
-A: Yes. Just point `manifestUrl` to your CDN URL.
+**How big is it?**  
+Less than 10KB.
 
 ## Contributing
 
-Found a bug? Have a feature request? Open an issue on GitHub.
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you'd like to change.
+Found a bug? Open an issue. Want to add a feature? Submit a PR.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
-Free to use in personal and commercial projects.
+MIT - do whatever you want with it.
 
 ## Credits
 
 Built by [Mohammad Faiz](https://github.com/Mohammad-Faiz-Cloud-Engineer)
 
-If this saved you time, consider giving it a star on GitHub!
+If this saved you time, star it on GitHub.
 
 ---
 
-**Made for developers who are tired of cache issues.**
+Made for developers tired of cache issues.
