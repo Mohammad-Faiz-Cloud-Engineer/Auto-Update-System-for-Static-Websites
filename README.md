@@ -16,7 +16,7 @@ This library checks your server every 30 seconds for a new version. When it find
 
 ## Quick Start
 
-Download two files:
+Download files from the `dist/` folder:
 - `auto-update.js` - the library
 - `version-manifest.json` - tracks your version
 
@@ -42,6 +42,30 @@ Set your version in `version-manifest.json`:
 ```
 
 Upload everything. You're done.
+
+### Framework Integration
+
+Using React, Vue, or Angular? We have ready-to-use integrations in the `integrations/` folder:
+
+- **React**: Custom hook with full lifecycle support
+- **Vue**: Component with Options API and Composition API
+- **Angular**: Service with RxJS observables
+
+See [docs/guides/FRAMEWORK_INTEGRATION.md](docs/guides/FRAMEWORK_INTEGRATION.md) for complete examples.
+
+### Build Tool Integration
+
+Using Webpack or Vite? Plugins in the `plugins/` folder automatically generate the manifest during build:
+
+```javascript
+// Webpack
+new AutoUpdateWebpackPlugin({ version: '1.0.0' })
+
+// Vite
+autoUpdate({ version: '1.0.0' })
+```
+
+See [docs/guides/BUILD_PLUGINS.md](docs/guides/BUILD_PLUGINS.md) for setup instructions.
 
 ## Deploying Updates
 
@@ -106,6 +130,7 @@ AutoUpdate.init({
   notificationMessage: 'New version available!',
   retryAttempts: 3,
   retryDelay: 5000,
+  rolloutPercentage: 1.0,  // 1.0 = 100% of users (new in v2.1)
   
   onUpdateAvailable: (newVersion, oldVersion) => {
     console.log(`Update: ${oldVersion} → ${newVersion}`);
@@ -120,6 +145,19 @@ AutoUpdate.init({
   }
 });
 ```
+
+### Progressive Rollout (New in v2.1)
+
+Update only a percentage of users:
+
+```javascript
+AutoUpdate.init({
+  manifestUrl: '/version-manifest.json',
+  rolloutPercentage: 0.1  // Update 10% of users
+});
+```
+
+Perfect for testing new versions with a subset of users before full rollout. Each user gets a stable ID, so they consistently either get or don't get the update.
 
 ## Real Examples
 
@@ -214,7 +252,7 @@ Cache-Control: public, max-age=31536000, immutable
 
 Then use URLs like `app.js?v=1.0.1` or `app.v1.0.1.js`.
 
-See `SERVER_CACHE_CONFIG.md` for complete examples for Apache, Nginx, Node.js, Python, and all major CDNs (Cloudflare, AWS, Netlify, Vercel).
+See [docs/guides/SERVER_CACHE_CONFIG.md](docs/guides/SERVER_CACHE_CONFIG.md) for complete examples for Apache, Nginx, Node.js, Python, and all major CDNs (Cloudflare, AWS, Netlify, Vercel).
 
 ## Browser Support
 
